@@ -1,8 +1,8 @@
 ---
-description: Delegate task to GLM-4.6 for cost-efficient execution (invoked by glm-delegation skill or user)
+description: Delegate task to MiniMax for cost-efficient execution (invoked by ai-delegation skill or user)
 ---
 
-You are delegating a task to GLM-4.6 for execution.
+You are delegating a task to MiniMax for execution.
 
 ## Context
 
@@ -26,26 +26,26 @@ Write **Task Description(`$ARGUMENTS`)** to `/tmp/ai-task.md`
 - Local file paths (for AI to use Read)
 - Or embed key API definitions directly
 
-**Step 2: Execute GLM-4.6 via Bash**
+**Step 2: Execute MiniMax via Bash**
 
 Run the following command:
 
 ```bash
-claude --dangerously-skip-permissions --settings ~/.claude/settings-glm.json --output-format json --system-prompt "$(< ~/.claude/plugins/glm/system-prompt.md)" -p "$(< /tmp/ai-task.md)"
+claude --dangerously-skip-permissions --settings ~/.claude/settings-minimax.json --output-format json --system-prompt "$(< ~/.claude/plugins/minimax/system-prompt.md)" -p "$(< /tmp/ai-task.md)"
 ```
 
 If our task can find similar examples in `~/.claude/skills/ai-delegation/examples/*.md`, we can use `--append-system-prompt "$(< example.md)"` to supplement the system-prompt
 
 **Step 3: Return Results**
 
-The GLM-4.6 output will be displayed. Your job is to:
+The MiniMax output will be displayed. Your job is to:
 1. Review the output
 2. Perform quick verification (as described in the output)
 3. Report completion status to the user
 
 ## Verification Guidance
 
-After GLM-4.6 completes:
+After MiniMax completes:
 - **File operations**: Use `ls -lh` to verify files were created
 - **Code generation**: Spot-check 2-3 files with `cat` or `head`
 - **Data processing**: Compare statistics (counts, sizes)

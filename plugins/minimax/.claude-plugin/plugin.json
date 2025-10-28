@@ -1,6 +1,6 @@
 {
-  "name": "glm",
-  "description": "Claude Agent power by GLM",
+  "name": "minimax",
+  "description": "Claude Agent power by MINIMAX",
   "version": "1.0.0",
   "author": {
     "name": "Gaubee",

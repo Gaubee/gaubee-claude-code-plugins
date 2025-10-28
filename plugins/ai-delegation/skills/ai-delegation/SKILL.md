@@ -1,11 +1,11 @@
 ---
-name: glm-delegation
-description: Automatically identify tool-intensive tasks with clear boundaries and delegate them to GLM-4.6 for cost-efficient execution. Triggers on batch operations (WebFetch, Read, Write, Edit, Bash, MCP, etc.), data processing, code generation, code analysis, and web scraping tasks, chrome-devtools-mcp tasks.
+name: ai-delegation
+description: Automatically identify tool-intensive tasks with clear boundaries and delegate them to cost-efficient AI providers for execution. Triggers on batch operations (WebFetch, Read, Write, Edit, Bash, MCP, etc.), data processing, code generation, code analysis, and web scraping tasks, chrome-devtools-mcp tasks.
 ---
 
-# GLM-4.6 Task Delegation Skill
+# AI Task Delegation Skill
 
-This skill helps you automatically identify tasks suitable for delegation to GLM-4.6, a cost-effective LLM that excels at tool-intensive, well-defined workflows.
+This skill helps you automatically identify tasks suitable for delegation to cost-effective AI providers that excel at tool-intensive, well-defined workflows.
 
 ## 1. Core Purpose
 
@@ -20,8 +20,8 @@ These tasks, while important, quickly bloat the context window.
 
 ### 1.2 The Solution
 
-Delegate **tool-intensive** but **clearly-defined** tasks to GLM-4.6:
-- GLM-4.6 executes in isolation, preserving your context
+Delegate **tool-intensive** but **clearly-defined** tasks to cost-efficient AI providers:
+- AI provider executes in isolation, preserving your context
 - You only need simple verification of results (file list, spot-check, statistics)
 - The verification cost is minimal compared to direct execution
 
@@ -38,7 +38,7 @@ Delegate **tool-intensive** but **clearly-defined** tasks to GLM-4.6:
 - Would consume significant context if executed directly
 - Delegation keeps main session clean
 
-## 2. GLM-4.6 Model Profile
+## 2. AI Provider Profile
 
 ### 2.1 Strengths
 - **Proficient Tool User**: Multi-step, tool-driven tasks
@@ -46,10 +46,10 @@ Delegate **tool-intensive** but **clearly-defined** tasks to GLM-4.6:
 - **Cost-Effective**: Ideal for large volumes of repetitive work
 
 ### 2.2 Limitations
-- **Limited Context**: 200K window (vs. Claude's 1M)
+- **Limited Context**: Smaller context window compared to main Claude session
 - **Outdated Knowledge**: You **MUST** provide technical documentation
   - Via URLs (for chrome-devtools-mcp or WebFetch)
-  - Via local paths (for GLM to use Read)
+  - Via local paths (for AI to use Read)
   - Or embed directly in the prompt
 - **Not for Deep Reasoning**: Complex design/strategy stays with main Claude
 - **Best for Procedural Tasks**: Mechanical, clearly-defined, process-oriented work
@@ -149,7 +149,7 @@ When you encounter a task, ask these three questions:
 2. **Will it generate many tool calls?** (Consume context rapidly)
 3. **Is verification simple?** (No deep review required)
 
-If **all three answers are "yes"**, invoke the `/glm` slash command:
+If **all three answers are "yes"**, invoke the appropriate slash command (e.g., `/glm`, `/minimax`):
 
 ### Step 1: Identify the Task
 
@@ -166,15 +166,15 @@ Build a complete task description including:
 1. **Inputs**: Data sources, file paths, URLs
 2. **Outputs**: Desired result format and location
 3. **Acceptance Criteria**: How to verify completion
-4. **Technical Documentation**: **NEVER assume GLM knows any technology**
+4. **Technical Documentation**: **NEVER assume AI knows any technology**
    - Provide doc URLs (for chrome-devtools-mcp to navigate and snapshot)
    - Or local doc paths (for Read)
    - Or embed key API definitions
 5. **Specifications**: Coding standards, templates, formatting rules
 
-### Step 3: Invoke the /glm Command
+### Step 3: Invoke the Appropriate Command
 
-Use the SlashCommand tool:
+Use the SlashCommand tool with the appropriate provider:
 
 ```
 /glm "Please [task description].
@@ -195,9 +195,15 @@ Use the SlashCommand tool:
 "
 ```
 
+Or:
+
+```
+/minimax "Please [task description]..."
+```
+
 ### Step 4: Verify Results
 
-After GLM-4.6 completes:
+After AI completes:
 - **File List**: `ls -lh ./output/`
 - **Spot-Check**: `cat ./output/sample.md | head -20`
 - **Statistics**: Compare counts/sizes to expectations
@@ -241,11 +247,11 @@ If issues found, delegate a follow-up correction task.
 
 1. **Define Clear Boundaries** - Inputs, outputs, acceptance criteria must be unambiguous
 2. **Create Self-Contained Tasks** - Provide all context, specs, examples in the prompt
-3. **Documentation is Mandatory** - **NEVER** assume GLM has tech knowledge. Always provide:
+3. **Documentation is Mandatory** - **NEVER** assume AI has tech knowledge. Always provide:
    - Documentation URLs (for chrome-devtools-mcp to navigate and snapshot)
    - Local doc paths (for Read)
    - Or embedded API definitions/examples
-4. **Prioritize Cost-Effectiveness** - Only delegate when `Cost(Delegation + Verification) < Cost(Direct)
+4. **Prioritize Cost-Effectiveness** - Only delegate when `Cost(Delegation + Verification) < Cost(Direct)`
 5. **Trust, Then Verify** - Don't micromanage; focus on verifying final results
 6. **Keep Verification Simple** - Use file lists, JSON parsing, spot-checks
 7. **Conserve Context** - Delegate tool-intensive tasks to keep main session free
@@ -269,8 +275,8 @@ This skill should activate when you observe:
 ## Reference
 
 For detailed examples, see:
-- `~/.claude/skills/glm-delegation/examples/web-scraping.md`
-- `~/.claude/skills/glm-delegation/examples/code-generation.md`
-- `~/.claude/skills/glm-delegation/examples/code-analysis.md`
-- `~/.claude/skills/glm-delegation/examples/visual-inspection.md`
-- `~/.claude/skills/glm-delegation/examples/documentation-research.md`
+- `~/.claude/skills/ai-delegation/examples/web-scraping.md`
+- `~/.claude/skills/ai-delegation/examples/code-generation.md`
+- `~/.claude/skills/ai-delegation/examples/code-analysis.md`
+- `~/.claude/skills/ai-delegation/examples/visual-inspection.md`
+- `~/.claude/skills/ai-delegation/examples/documentation-research.md`
