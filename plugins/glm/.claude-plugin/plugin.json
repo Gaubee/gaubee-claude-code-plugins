@@ -1,0 +1,9 @@
+{
+  "name": "glm",
+  "description": "Claude Agent For GLM",
+  "version": "1.0.0",
+  "author": {
+    "name": "Gaubee",
+    "email": "gaubeebangeel@gmail.com"
+  }
+}
