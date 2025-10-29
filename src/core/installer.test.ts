@@ -73,6 +73,11 @@ describe("installer", () => {
       expect(content).toBeDefined();
       expect(content).toContain("GLM");
       expect(content).toContain("web-scraping");
+      // Check that command uses --prompt-file and no problematic shell syntax
+      expect(content).toContain("--prompt-file");
+      expect(content).not.toContain("$<(");
+      // But $(...) is allowed for other purposes (like jq commands)
+      expect(content).toContain("$(echo"); // jq commands are fine
     });
 
     it("should replace template placeholders correctly", async () => {
@@ -84,6 +89,8 @@ describe("installer", () => {
       const content = context.getOperations()[0].content;
       expect(content).toBeDefined();
       expect(content).toContain("test-provider");
+      expect(content).toContain("Test Provider");
+      expect(content).toContain("- example1");
       expect(content).not.toContain("{{PROVIDER}}");
       expect(content).not.toContain("{{PROVIDER_INFO}}");
       expect(content).not.toContain("{{EXAMPLES_LIST}}");
@@ -114,6 +121,9 @@ describe("installer", () => {
       const content = context.getOperations()[0].content;
       expect(content).toContain("Intelligently route");
       expect(content).toContain("---"); // Separator between templates
+      // Check that router template avoids problematic $<( syntax
+      expect(content).not.toContain("$<(");
+      // $(cat) should be used for file reading in non-ccai commands
     });
   });
 

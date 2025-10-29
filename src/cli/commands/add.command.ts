@@ -25,12 +25,10 @@ export async function addProvider(
   // Create provider settings from template
   const templateContent = templates["ccai/settings-provider.json.template"];
   const settingsTemplate: ProviderSettings = JSON.parse(
-    templateContent.replace(/\{\{PROVIDER\}\}/g, provider)
+    templateContent
+      .replace(/\{\{provider\}\}/g, provider)
+      .replace(/\{\{PROVIDER\}\}/g, provider.toUpperCase())
   );
-
-  // Update with provider-specific info
-  settingsTemplate.ccai.name = provider.toUpperCase();
-  settingsTemplate.ccai.description = `${provider} provider description.\n\nUpdate this with provider capabilities and use cases.`;
 
   await writeJsonFile(settingsPath, settingsTemplate, context);
 

@@ -25,13 +25,13 @@ vi.mock("@/generated/templates.js", () => ({
     "ccai/settings-provider.json.template": JSON.stringify({
       ccai: {
         name: "{{PROVIDER}}",
-        description: "Provider description",
-        systemPrompt: "",
+        description: "{{PROVIDER}} Provider description and capabilities.",
+        systemPrompt: "You are using {{PROVIDER}} model.",
         disabled: true,
       },
       env: {
-        ANTHROPIC_AUTH_TOKEN: "your-api-key-here",
-        ANTHROPIC_BASE_URL: "https://api.provider.com/v1",
+        ANTHROPIC_AUTH_TOKEN: "your-{{provider}}-api-key-here",
+        ANTHROPIC_BASE_URL: "https://api.{{provider}}.com/v1",
       },
     }),
   },
@@ -60,7 +60,12 @@ describe("add.command", () => {
         expect.objectContaining({
           ccai: expect.objectContaining({
             name: "GLM",
-            description: expect.stringContaining("glm provider description"),
+            description: expect.stringContaining("GLM Provider description"),
+            systemPrompt: expect.stringContaining("GLM model"),
+          }),
+          env: expect.objectContaining({
+            ANTHROPIC_AUTH_TOKEN: "your-glm-api-key-here",
+            ANTHROPIC_BASE_URL: "https://api.glm.com/v1",
           }),
         }),
         context
@@ -89,7 +94,7 @@ describe("add.command", () => {
       expect(writeJsonFile).toHaveBeenCalled();
     });
 
-    it("should replace provider placeholder in template", async () => {
+    it("should replace provider placeholders in template", async () => {
       const { addProvider } = await import("./add.command.js");
       const { fileExists, writeJsonFile } = await import("@/utils/fs.js");
 
@@ -101,7 +106,10 @@ describe("add.command", () => {
       const settings = callArgs[1] as any;
 
       expect(settings.ccai.name).toBe("MINIMAX");
-      expect(settings.ccai.description).toContain("minimax");
+      expect(settings.ccai.description).toContain("MINIMAX");
+      expect(settings.ccai.systemPrompt).toContain("MINIMAX");
+      expect(settings.env.ANTHROPIC_AUTH_TOKEN).toBe("your-minimax-api-key-here");
+      expect(settings.env.ANTHROPIC_BASE_URL).toBe("https://api.minimax.com/v1");
     });
   });
 });
