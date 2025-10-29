@@ -74,9 +74,9 @@ export async function executeAI(
   // 5. Execute Claude
   logger.info("Starting Claude execution...");
   try {
-    // If pretty-json or format is enabled, capture output instead of inherit
-    if (options.prettyJson || options.format !== undefined) {
-      const { parseAndFormatOutput } = await import("@/utils/json-formatter.js");
+    // Determine output handling mode
+    if (options.format !== undefined) {
+      // Mode 1: Template formatting - only format result messages with template
       const { parseAndFormatWithTemplate } = await import("@/utils/template-formatter.js");
 
       await new Promise<void>((resolve, reject) => {
@@ -85,34 +85,110 @@ export async function executeAI(
           shell: false,
         });
 
-        let stdout = "";
+        let buffer = "";
         let stderr = "";
+        const resultMessages: string[] = [];
 
         child.stdout.on("data", (data) => {
-          stdout += data.toString();
+          buffer += data.toString();
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const json = JSON.parse(line);
+              if (json.type === "result") {
+                resultMessages.push(line);
+              }
+              // Silently ignore non-result messages in format mode
+            } catch {
+              // Ignore invalid JSON
+            }
+          }
         });
 
         child.stderr.on("data", (data) => {
           stderr += data.toString();
+          process.stderr.write(data);
         });
 
         child.on("exit", (code) => {
+          if (buffer.trim()) {
+            try {
+              const json = JSON.parse(buffer);
+              if (json.type === "result") {
+                resultMessages.push(buffer);
+              }
+            } catch {
+              // Ignore
+            }
+          }
+
           if (code === 0) {
-            // Format output based on option
-            if (options.format !== undefined) {
-              // Use template formatter (with custom template if provided)
+            const resultOutput = resultMessages.join("\n");
+            if (resultOutput) {
               const template = typeof options.format === "string" ? options.format : undefined;
-              parseAndFormatWithTemplate(stdout, template);
-            } else {
-              // Use pretty-json formatter
-              parseAndFormatOutput(stdout);
+              parseAndFormatWithTemplate(resultOutput, template);
             }
             resolve();
           } else {
-            // Show error output
-            if (stderr) {
-              console.error(stderr);
+            reject(new Error(`Claude exited with code ${code}`));
+          }
+        });
+
+        child.on("error", (err) => {
+          reject(new Error(`Failed to execute claude: ${err.message}`));
+        });
+      });
+    } else if (options.prettyJson) {
+      // Mode 2: Pretty JSON - beautify JSON output but keep JSON structure
+      const { prettyPrintJson } = await import("@/utils/json-formatter.js");
+
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn("claude", args, {
+          stdio: ["ignore", "pipe", "pipe"],
+          shell: false,
+        });
+
+        let buffer = "";
+        let stderr = "";
+
+        child.stdout.on("data", (data) => {
+          buffer += data.toString();
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const json = JSON.parse(line);
+              prettyPrintJson(json);
+            } catch {
+              // If not valid JSON, output as-is
+              console.log(line);
             }
+          }
+        });
+
+        child.stderr.on("data", (data) => {
+          stderr += data.toString();
+          process.stderr.write(data);
+        });
+
+        child.on("exit", (code) => {
+          if (buffer.trim()) {
+            try {
+              const json = JSON.parse(buffer);
+              prettyPrintJson(json);
+            } catch {
+              console.log(buffer);
+            }
+          }
+
+          if (code === 0) {
+            resolve();
+          } else {
             reject(new Error(`Claude exited with code ${code}`));
           }
         });

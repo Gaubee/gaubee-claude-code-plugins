@@ -124,3 +124,8 @@ npx ccai run --provider glm --session-id <uuid-from-plan>
 
 1. run 如果配置了`--format[=custom template]`，所以我们应该基于json内容和模板来做打印。默认打印 type/subtype/result/session_id/is_error/num_turns 等关键信息和统计信息。
 （但是目前还需要收集足够多的结构信息才能知道如何格式化最好。）
+
+---
+
+
+1. run 添加 `--prompt-file`的支持，方便使用者自己从一个文件导入复杂的prompt，同时也不用开启repl。

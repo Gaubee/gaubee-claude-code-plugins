@@ -1,4 +1,4 @@
-import type { ClaudeOutput } from "./json-formatter.js";
+import type { ClaudeOutput, ClaudeResultOutput } from "./json-formatter.js";
 import { logger } from "./logger.js";
 
 /**
@@ -11,7 +11,7 @@ Status: {{status}} ({{subtype}})
 Error: {{is_error}}
 {{#if num_turns}}Turns: {{num_turns}}{{/if}}
 {{#if duration_s}}Duration: {{duration_s}}s{{/if}}{{#if duration_api_s}} (API: {{duration_api_s}}s){{/if}}
-{{#if total_cost_usd}}Cost: ${{total_cost_usd}}{{/if}}
+{{#if total_cost_usd}}Cost: {{total_cost_usd}}{{/if}}
 {{#if input_tokens}}Tokens: {{input_tokens}} in / {{output_tokens}} out{{/if}}
 {{#if cache_read_tokens}}Cache Read: {{cache_read_tokens}}{{/if}}
 {{#if result}}
@@ -51,13 +51,15 @@ export function renderTemplate(template: string, data: Record<string, unknown>):
   });
 
   // Handle simple variable substitution: {{variable}}
-  result = result.replace(/\{\{(\w+)\}\}/g, (_, key) => {
-    const value = data[key];
-    if (value === undefined || value === null) {
-      return "";
-    }
-    return String(value);
-  });
+  result = result
+    .replace(/\{\{(\w+)\}\}/g, (_, key) => {
+      const value = data[key];
+      if (value === undefined || value === null) {
+        return "";
+      }
+      return String(value);
+    })
+    .replace(/\n{3,}/, "\n\n");
 
   return result;
 }
@@ -73,7 +75,7 @@ function safeGet<T>(value: T | undefined | null, fallback: T): T {
  * Prepare data object for template rendering
  * Tolerant of missing fields - returns empty string for missing values
  */
-export function prepareTemplateData(output: Partial<ClaudeOutput>): Record<string, unknown> {
+export function prepareTemplateData(output: ClaudeResultOutput): Record<string, unknown> {
   const durationMs = safeGet(output.duration_ms, 0);
   const durationApiMs = safeGet(output.duration_api_ms, 0);
 
@@ -94,7 +96,12 @@ export function prepareTemplateData(output: Partial<ClaudeOutput>): Record<strin
 
     // Turns and cost
     num_turns: output.num_turns ?? "",
-    total_cost_usd: output.total_cost_usd !== undefined ? output.total_cost_usd.toFixed(6) : "",
+    total_cost_usd:
+      output.total_cost_usd !== undefined &&
+      output.total_cost_usd !== null &&
+      typeof output.total_cost_usd === "number"
+        ? output.total_cost_usd.toFixed(6)
+        : "",
 
     // Token usage
     input_tokens: output.usage?.input_tokens ?? "",
@@ -115,7 +122,7 @@ export function prepareTemplateData(output: Partial<ClaudeOutput>): Record<strin
  * Format Claude output using a template
  * Tolerant of missing fields - will not error on missing data
  */
-export function formatWithTemplate(output: Partial<ClaudeOutput>, template?: string): void {
+export function formatWithTemplate(output: ClaudeResultOutput, template?: string): void {
   const templateStr = template || DEFAULT_FORMAT_TEMPLATE;
   const data = prepareTemplateData(output);
 
@@ -129,14 +136,29 @@ export function formatWithTemplate(output: Partial<ClaudeOutput>, template?: str
 }
 
 /**
+ * Type guard to check if a message is a result message
+ */
+function isResultMessage(message: ClaudeOutput): boolean {
+  return message.type === "result";
+}
+
+/**
  * Parse and format JSON output using template
+ * Handles multiple JSON objects separated by newlines
+ * Only formats result messages, silently ignores other message types
  */
 export function parseAndFormatWithTemplate(jsonString: string, template?: string): void {
-  try {
-    const output = JSON.parse(jsonString) as ClaudeOutput;
-    formatWithTemplate(output, template);
-  } catch (error) {
-    logger.error("Failed to parse JSON output");
-    console.log(jsonString); // Fallback to raw output
+  const lines = jsonString.split("\n").filter((line) => line.trim());
+
+  for (const line of lines) {
+    try {
+      const output = JSON.parse(line) as ClaudeOutput;
+      if (isResultMessage(output)) {
+        formatWithTemplate(output as ClaudeResultOutput, template);
+      }
+      // Silently ignore non-result messages (system, assistant, etc.)
+    } catch (error) {
+      // Skip invalid JSON lines silently
+    }
   }
 }

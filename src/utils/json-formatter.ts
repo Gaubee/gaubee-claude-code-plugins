@@ -1,12 +1,70 @@
-import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { SDKMessage, SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import { inspect } from "node:util";
 import { logger } from "./logger.js";
 
 /**
+ * Pretty print a JSON object using util.inspect
+ */
+export function prettyPrintJson(json: unknown): void {
+  console.log(
+    inspect(json, {
+      colors: true,
+      depth: null,
+      compact: false,
+      breakLength: 80,
+    })
+  );
+}
+
+/**
  * Claude CLI JSON output structure
  * Using SDKMessage from @anthropic-ai/claude-agent-sdk
+ * For formatting purposes, we primarily work with SDKResultMessage which contains
+ * the execution results and usage statistics
  */
 export type ClaudeOutput = SDKMessage;
+
+/**
+ * Extended result output type that includes all possible fields from both
+ * success and error result messages. All fields are optional for flexible formatting.
+ */
+export type ClaudeResultOutput = {
+  uuid?: string;
+  session_id?: string;
+  type?: "result";
+  subtype?: "success" | "error_max_turns" | "error_during_execution";
+  duration_ms?: number;
+  duration_api_ms?: number;
+  is_error?: boolean;
+  num_turns?: number;
+  result?: string; // Only present in success subtype
+  total_cost_usd?: number;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    cache_read_input_tokens?: number;
+    cache_creation_input_tokens?: number;
+    server_tool_use?: {
+      web_search_requests?: number;
+    };
+  };
+  modelUsage?: {
+    [modelName: string]: {
+      inputTokens?: number;
+      outputTokens?: number;
+      cacheReadInputTokens?: number;
+      cacheCreationInputTokens?: number;
+      webSearchRequests?: number;
+      costUSD?: number;
+      contextWindow?: number;
+    };
+  };
+  permission_denials?: Array<{
+    tool_name: string;
+    tool_use_id: string;
+    tool_input: Record<string, unknown>;
+  }>;
+};
 
 /**
  * Safely get a value with fallback
@@ -19,7 +77,7 @@ function safeGet<T>(value: T | undefined | null, fallback: T): T {
  * Format Claude output in a pretty, human-readable way
  * Tolerant of missing fields
  */
-export function formatClaudeOutput(output: Partial<ClaudeOutput>): void {
+export function formatClaudeOutput(output: ClaudeResultOutput): void {
   // Header
   logger.section("Execution Summary");
 
@@ -51,8 +109,9 @@ export function formatClaudeOutput(output: Partial<ClaudeOutput>): void {
   }
 
   // Cost
-  if (output.total_cost_usd !== undefined && output.total_cost_usd !== null) {
-    console.log(`💰 Cost: $${output.total_cost_usd.toFixed(6)}`);
+  const totalCost = output.total_cost_usd;
+  if (totalCost !== undefined && totalCost !== null && typeof totalCost === "number") {
+    console.log(`💰 Cost: $${totalCost.toFixed(6)}`);
   }
 
   // Token usage
@@ -98,7 +157,9 @@ export function formatClaudeOutput(output: Partial<ClaudeOutput>): void {
       }
 
       const cost = safeGet(usage.costUSD, 0);
-      console.log(`   Cost: $${cost.toFixed(6)}`);
+      if (typeof cost === "number") {
+        console.log(`   Cost: $${cost.toFixed(6)}`);
+      }
 
       const contextWindow = safeGet(usage.contextWindow, 0);
       if (contextWindow > 0) {
@@ -133,15 +194,3 @@ export function formatClaudeOutput(output: Partial<ClaudeOutput>): void {
   console.log(); // Empty line at the end
 }
 
-/**
- * Parse and format JSON output from Claude CLI
- */
-export function parseAndFormatOutput(jsonString: string): void {
-  try {
-    const output = JSON.parse(jsonString) as ClaudeOutput;
-    formatClaudeOutput(output);
-  } catch (error) {
-    logger.error("Failed to parse JSON output");
-    console.log(jsonString); // Fallback to raw output
-  }
-}
