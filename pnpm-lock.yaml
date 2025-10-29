@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    lodash:
+      specifier: npm:lodash-es@^4.17.21
+      version: 4.17.21
     oxlint:
       specifier: ^1.24.0
       version: 1.24.0
@@ -27,8 +30,8 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0
       lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
+        specifier: 'catalog:'
+        version: lodash-es@4.17.21
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
@@ -739,8 +742,8 @@ packages:
   js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
 
-  lodash@4.17.21:
-    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+  lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
@@ -1616,7 +1619,7 @@ snapshots:
 
   js-tokens@9.0.1: {}
 
-  lodash@4.17.21: {}
+  lodash-es@4.17.21: {}
 
   loupe@3.2.1: {}
 

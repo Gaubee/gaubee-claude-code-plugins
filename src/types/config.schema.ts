@@ -43,6 +43,7 @@ export const PromptMergeOptionsSchema = z.object({
   provider: z.string(),
   taskType: TaskTypeSchema.optional(),
   customPrompts: z.array(z.string()).optional(),
+  planOnly: z.boolean().optional(),
 });
 
 export type PromptMergeOptions = z.infer<typeof PromptMergeOptionsSchema>;
@@ -50,9 +51,16 @@ export type PromptMergeOptions = z.infer<typeof PromptMergeOptionsSchema>;
 /**
  * Provider execution options
  */
-export const ExecuteOptionsSchema = z.object({
-  taskType: TaskTypeSchema.optional(),
-  skipLog: z.boolean().optional().default(false),
-});
+export const ExecuteOptionsSchema = z
+  .object({
+    taskType: TaskTypeSchema.optional(),
+    skipLog: z.boolean().optional(),
+    sessionId: z.string().optional(),
+    planOnly: z.boolean().optional(),
+    log: z.boolean().optional(),
+    verbose: z.boolean().optional(),
+  })
+  .optional()
+  .default({});
 
 export type ExecuteOptions = z.infer<typeof ExecuteOptionsSchema>;

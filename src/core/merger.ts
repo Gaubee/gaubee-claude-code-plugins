@@ -69,7 +69,24 @@ export async function mergeSystemPrompts(options: PromptMergeOptions): Promise<s
     prompts.push(content);
   }
 
-  // 2. Task-specific enhancement
+  // 2. Plan-only mode enhancement
+  if (options.planOnly) {
+    prompts.push(`## Plan-Only Mode
+
+You are in plan-only mode. Do NOT execute the task.
+
+Instead, provide a detailed execution plan including:
+1. Step-by-step approach
+2. Tool calls needed
+3. Estimated complexity
+4. Estimated token consumption and cost
+5. Potential risks
+6. Expected output format
+
+This plan will be used to evaluate which provider is best suited for the task.`);
+  }
+
+  // 3. Task-specific enhancement
   if (options.taskType) {
     const examplePath = join(claudeDir, "skills", "ccai", "examples", `${options.taskType}.md`);
     if (await fileExists(examplePath)) {
@@ -78,7 +95,7 @@ export async function mergeSystemPrompts(options: PromptMergeOptions): Promise<s
     }
   }
 
-  // 3. Provider-specific prompt from settings
+  // 4. Provider-specific prompt from settings
   const settingsPath = getProviderSettingsPath(options.provider);
   if (await fileExists(settingsPath)) {
     const settings = await readJsonFile<ProviderSettings>(settingsPath);

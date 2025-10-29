@@ -171,7 +171,7 @@ describe("ExecuteOptionsSchema", () => {
     const result = ExecuteOptionsSchema.safeParse(emptyOptions);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.skipLog).toBe(false); // Default value
+      expect(result.data.skipLog).toBeUndefined(); // No default value
     }
   });
 

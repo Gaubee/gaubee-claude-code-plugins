@@ -21,26 +21,10 @@ export function createMergePromptsCommand(): Command {
           }
         }
 
-        const customPrompts: string[] = [];
-
-        if (options.planOnly) {
-          customPrompts.push(`## Plan-Only Mode
-
-You are in plan-only mode. Do NOT execute the task.
-
-Instead, provide a detailed execution plan including:
-1. Step-by-step approach
-2. Tool calls needed
-3. Estimated complexity
-4. Estimated token consumption and cost
-5. Potential risks
-6. Expected output format`);
-        }
-
         const prompt = await mergeSystemPrompts({
           provider: options.provider,
           taskType: options.example,
-          customPrompts,
+          planOnly: options.planOnly,
         });
 
         // Output prompt to stdout for shell command substitution

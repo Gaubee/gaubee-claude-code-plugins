@@ -41,9 +41,27 @@ export async function executeAI(
     "--dangerously-skip-permissions",
     "--settings",
     settingsPath,
-    "--output-format",
-    "json",
   ];
+
+  // Add output format based on log option
+  if (options.log) {
+    args.push("--output-format", "stream-json");
+    logger.info("Using stream-json output format for detailed logging");
+  } else {
+    args.push("--output-format", "json");
+  }
+
+  // Add verbose flag if requested
+  if (options.verbose) {
+    args.push("--verbose");
+    logger.info("Verbose mode enabled");
+  }
+
+  // Add session ID if provided (for continuing context)
+  if (options.sessionId) {
+    args.push("--session-id", options.sessionId);
+    logger.info(`Continuing session: ${options.sessionId}`);
+  }
 
   // Add system prompt
   if (useFile && promptPath) {

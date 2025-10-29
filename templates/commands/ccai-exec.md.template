@@ -28,36 +28,110 @@ Write **Task Description($ARGUMENTS)** to `/tmp/ccai-task-{{PROVIDER}}.md`
 
 **Step 2: Execute {{PROVIDER}} via Bash**
 
-Run the following command:
+Run the following command and capture the JSON output:
 
 ```bash
 # Basic execution (no task type)
-claude --dangerously-skip-permissions \
-  --settings "$(ccai merge-settings {{PROVIDER}})" \
-  --output-format json \
-  --system-prompt "$(ccai merge-prompts --provider {{PROVIDER}})" \
-  -p "$(< /tmp/ccai-task-{{PROVIDER}}.md)"
+RESULT=$(npx ccai run --provider {{PROVIDER}} "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
 
 # With task-specific enhancement (if applicable)
-# Uncomment and modify the task type as needed:
-# claude --dangerously-skip-permissions \
-#   --settings "$(ccai merge-settings {{PROVIDER}})" \
-#   --output-format json \
-#   --system-prompt "$(ccai merge-prompts --example web-scraping --provider {{PROVIDER}})" \
-#   -p "$(< /tmp/ccai-task-{{PROVIDER}}.md)"
+# Choose the appropriate task type based on the task:
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example web-scraping "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example code-generation "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example data-processing "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example code-analysis "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example documentation-research "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example visual-inspection "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
+
+# Parse the JSON result
+echo "$RESULT" > /tmp/ccai-result-{{PROVIDER}}.json
 ```
 
-**Step 3: Save Task Log**
+**Step 3: Check for Errors and Handle Recovery**
+
+Parse the JSON output to check for errors:
+
+```bash
+# Extract key fields from JSON
+IS_ERROR=$(echo "$RESULT" | jq -r '.is_error')
+SESSION_ID=$(echo "$RESULT" | jq -r '.session_id')
+RESULT_TEXT=$(echo "$RESULT" | jq -r '.result')
+SUBTYPE=$(echo "$RESULT" | jq -r '.subtype')
+```
+
+**If execution failed (`is_error: true`):**
+
+1. **Analyze the error**:
+   - Check `subtype` for error type (e.g., "tool_error", "timeout", "permission_denied")
+   - Review `result` for error details
+   - Check `permission_denials` array for specific permission issues
+
+2. **Provide recovery guidance**:
+   - For **tool errors**: Suggest fixing the tool call parameters or file paths
+   - For **permission errors**: Guide user to grant necessary permissions
+   - For **timeout errors**: Suggest breaking task into smaller steps
+   - For **other errors**: Provide specific troubleshooting based on error message
+
+3. **Offer to retry with session context**:
+   ```bash
+   # If you want to retry with fixes, use the session_id to continue:
+   npx ccai run --provider {{PROVIDER}} --session-id "$SESSION_ID" "
+   Based on the previous error: $RESULT_TEXT
+
+   Please fix the issue by:
+   [Your specific fix instructions here]
+   "
+   ```
+
+**If execution succeeded (`is_error: false`):**
+
+Proceed to Step 4.
+
+**Step 4: Save Task Log**
 
 Save the execution log to:
-`~/.claude/ccai/log/{{PROVIDER}}-$(date +%Y-%m-%d_%H-%M-%S).md`
+```bash
+LOG_FILE=~/.claude/ccai/log/{{PROVIDER}}-$(date +%Y-%m-%d_%H-%M-%S).md
 
-**Step 4: Return Results**
+cat > "$LOG_FILE" <<EOF
+# Task Execution Log - {{PROVIDER}}
 
-The {{PROVIDER}} output will be displayed. Your job is to:
-1. Review the output
-2. Perform quick verification (as described in the output)
+## Execution Time
+$(date)
+
+## Session ID
+$SESSION_ID
+
+## Task Description
+$(< /tmp/ccai-task-{{PROVIDER}}.md)
+
+## Result
+- Status: $SUBTYPE
+- Error: $IS_ERROR
+- Output: $RESULT_TEXT
+
+## Full JSON Output
+\`\`\`json
+$RESULT
+\`\`\`
+EOF
+```
+
+**Step 5: Return Results**
+
+Based on the execution result:
+
+**If successful:**
+1. Review the output from `result` field
+2. Perform quick verification (file count, spot-check, statistics)
 3. Report completion status to the user
+4. Provide the `session_id` if user might need to continue this context
+
+**If failed:**
+1. Explain the error clearly to the user
+2. Provide specific recovery steps based on error type
+3. Offer to retry with the `session_id` if appropriate
+4. Ask user if they want you to attempt automatic recovery
 
 ## Task Description($ARGUMENTS)
 

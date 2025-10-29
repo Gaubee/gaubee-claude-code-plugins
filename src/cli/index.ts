@@ -10,6 +10,7 @@ import { createInitCommand } from "./commands/init.command.js";
 import { createListCommand } from "./commands/list.command.js";
 import { createMergePromptsCommand } from "./commands/merge-prompts.command.js";
 import { createMergeSettingsCommand } from "./commands/merge-settings.command.js";
+import { createRunCommand } from "./commands/run.command.js";
 import { createUpdateCommand } from "./commands/update.command.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -43,6 +44,7 @@ export async function createCLI(): Promise<Command> {
   program.addCommand(createEnableCommand());
   program.addCommand(createDisableCommand());
   program.addCommand(createUpdateCommand());
+  program.addCommand(createRunCommand());
 
   // Internal commands (used by command files)
   program.addCommand(createMergeSettingsCommand());
