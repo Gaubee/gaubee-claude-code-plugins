@@ -76,8 +76,8 @@ export async function executeAI(
   try {
     // Determine output handling mode
     if (options.format !== undefined) {
-      // Mode 1: Template formatting - only format result messages with template
-      const { parseAndFormatWithTemplate } = await import("@/utils/template-formatter.js");
+      // Mode 1: Template formatting - format each JSON object with template
+      const { formatMessageWithTemplate } = await import("@/utils/template-formatter.js");
 
       await new Promise<void>((resolve, reject) => {
         const child = spawn("claude", args, {
@@ -87,7 +87,6 @@ export async function executeAI(
 
         let buffer = "";
         let stderr = "";
-        const resultMessages: string[] = [];
 
         child.stdout.on("data", (data) => {
           buffer += data.toString();
@@ -98,12 +97,11 @@ export async function executeAI(
             if (!line.trim()) continue;
             try {
               const json = JSON.parse(line);
-              if (json.type === "result") {
-                resultMessages.push(line);
-              }
-              // Silently ignore non-result messages in format mode
+              const template = typeof options.format === "string" ? options.format : undefined;
+              formatMessageWithTemplate(json, template);
             } catch {
-              // Ignore invalid JSON
+              // If not valid JSON, output as-is
+              console.log(line);
             }
           }
         });
@@ -117,20 +115,14 @@ export async function executeAI(
           if (buffer.trim()) {
             try {
               const json = JSON.parse(buffer);
-              if (json.type === "result") {
-                resultMessages.push(buffer);
-              }
+              const template = typeof options.format === "string" ? options.format : undefined;
+              formatMessageWithTemplate(json, template);
             } catch {
-              // Ignore
+              console.log(buffer);
             }
           }
 
           if (code === 0) {
-            const resultOutput = resultMessages.join("\n");
-            if (resultOutput) {
-              const template = typeof options.format === "string" ? options.format : undefined;
-              parseAndFormatWithTemplate(resultOutput, template);
-            }
             resolve();
           } else {
             reject(new Error(`Claude exited with code ${code}`));

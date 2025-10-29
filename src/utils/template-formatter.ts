@@ -143,9 +143,43 @@ function isResultMessage(message: ClaudeOutput): boolean {
 }
 
 /**
+ * Format a single message with template
+ * Handles different message types appropriately
+ */
+export function formatMessageWithTemplate(message: ClaudeOutput, template?: string): void {
+  if (isResultMessage(message)) {
+    // Format result messages with full template
+    formatWithTemplate(message as ClaudeResultOutput, template);
+  } else if (message.type === "system") {
+    // Format system messages with basic info
+    const systemMsg = message as any;
+    console.log(`[System] ${systemMsg.subtype || "init"} - Session: ${systemMsg.session_id || "N/A"}`);
+    if (systemMsg.model) {
+      console.log(`  Model: ${systemMsg.model}`);
+    }
+  } else if (message.type === "assistant") {
+    // Format assistant messages with basic info
+    const assistantMsg = message as any;
+    const hasThinking = assistantMsg.message?.content?.some((c: any) => c.type === "thinking");
+    const hasText = assistantMsg.message?.content?.some((c: any) => c.type === "text");
+    const hasToolUse = assistantMsg.message?.content?.some((c: any) => c.type === "tool_use");
+
+    const parts: string[] = [];
+    if (hasThinking) parts.push("thinking");
+    if (hasText) parts.push("text");
+    if (hasToolUse) parts.push("tool_use");
+
+    console.log(`[Assistant] ${parts.join(", ") || "message"}`);
+  } else {
+    // For other message types, output a simple notification
+    console.log(`[${(message as any).type || "Unknown"}] ${(message as any).subtype || ""}`);
+  }
+}
+
+/**
  * Parse and format JSON output using template
  * Handles multiple JSON objects separated by newlines
- * Only formats result messages, silently ignores other message types
+ * Formats all message types appropriately
  */
 export function parseAndFormatWithTemplate(jsonString: string, template?: string): void {
   const lines = jsonString.split("\n").filter((line) => line.trim());
@@ -153,10 +187,7 @@ export function parseAndFormatWithTemplate(jsonString: string, template?: string
   for (const line of lines) {
     try {
       const output = JSON.parse(line) as ClaudeOutput;
-      if (isResultMessage(output)) {
-        formatWithTemplate(output as ClaudeResultOutput, template);
-      }
-      // Silently ignore non-result messages (system, assistant, etc.)
+      formatMessageWithTemplate(output, template);
     } catch (error) {
       // Skip invalid JSON lines silently
     }
