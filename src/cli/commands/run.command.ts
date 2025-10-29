@@ -12,6 +12,7 @@ export function createRunCommand(): Command {
     .option("--session-id <uuid>", "Continue from a previous session")
     .option("--plan-only", "Generate execution plan only (for intelligent routing)")
     .option("--log", "Enable detailed logging with stream-json output format (auto-enables verbose)")
+    .option("--pretty-json", "Format JSON output in a human-readable way")
     .argument("[prompt...]", "Task prompt (can be multiple arguments, or enter REPL mode if omitted)")
     .action(async (promptArgs: string[], options) => {
       try {
@@ -51,6 +52,7 @@ export function createRunCommand(): Command {
           sessionId: options.sessionId,
           planOnly: options.planOnly,
           log: options.log,
+          prettyJson: options.prettyJson,
         });
       } catch (error) {
         logger.error(

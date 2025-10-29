@@ -113,8 +113,14 @@ npx ccai run --provider glm --session-id <uuid-from-plan>
 ---
 
 1. 我们需要在`ccai-exec.md.template`中提供异常处理的逻辑：基于这些信息返回到主Agent后，如果发现错误，那么它可以基于错误信息，提供修复引导，配合 session_id 来恢复上下文继续工作。有些可能是工具调用失败、错误、有些可能是
-2. run 添加 `--log`/`--verbose` 支持，如果启用`--log`，那么我们将使用`claude --output-format stream-json` 来配置输出。这时候我们将对原始内容做详细的输出。如果启用`--verbose`,那么等同于开启`claude --verbose`，这些参数适合开发者手动调用`npx ccai run`的时候开启
+2. run 添加 `--log`支持，如果启用`--log`，那么我们将使用`claude --output-format stream-json --verbose -p "..."` 来配置输出。
 
 ---
 
-1. run 如果配置了`--pretty-output`，所以我们应该基于json内容，打印最终 type/subtype/result/session_id/is_error/num_turns 等关键信息和统计信息即可。但是目前还需要收集足够多的结构信息才能知道如何格式化最好。
+1. run 如果配置了`--pretty-json`，可以使用`util.inspect/format`或者更加专业的格式化库来对打印内容做美化输出。
+
+---
+
+
+1. run 如果配置了`--format[=custom template]`，所以我们应该基于json内容和模板来做打印。默认打印 type/subtype/result/session_id/is_error/num_turns 等关键信息和统计信息。
+（但是目前还需要收集足够多的结构信息才能知道如何格式化最好。）

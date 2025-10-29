@@ -58,6 +58,7 @@ export const ExecuteOptionsSchema = z
     sessionId: z.string().optional(),
     planOnly: z.boolean().optional(),
     log: z.boolean().optional(),
+    prettyJson: z.boolean().optional(),
   })
   .optional()
   .default({});

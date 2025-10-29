@@ -74,26 +74,68 @@ export async function executeAI(
   // 5. Execute Claude
   logger.info("Starting Claude execution...");
   try {
-    await new Promise<void>((resolve, reject) => {
-      const child = spawn("claude", args, {
-        stdio: "inherit",
-        shell: false,
+    // If pretty-json is enabled, capture output instead of inherit
+    if (options.prettyJson) {
+      const { parseAndFormatOutput } = await import("@/utils/json-formatter.js");
+
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn("claude", args, {
+          stdio: ["ignore", "pipe", "pipe"],
+          shell: false,
+        });
+
+        let stdout = "";
+        let stderr = "";
+
+        child.stdout.on("data", (data) => {
+          stdout += data.toString();
+        });
+
+        child.stderr.on("data", (data) => {
+          stderr += data.toString();
+        });
+
+        child.on("exit", (code) => {
+          if (code === 0) {
+            // Parse and format the JSON output
+            parseAndFormatOutput(stdout);
+            resolve();
+          } else {
+            // Show error output
+            if (stderr) {
+              console.error(stderr);
+            }
+            reject(new Error(`Claude exited with code ${code}`));
+          }
+        });
+
+        child.on("error", (err) => {
+          reject(new Error(`Failed to execute claude: ${err.message}`));
+        });
+      });
+    } else {
+      // Standard execution with inherited stdio
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn("claude", args, {
+          stdio: "inherit",
+          shell: false,
+        });
+
+        child.on("exit", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`Claude exited with code ${code}`));
+          }
+        });
+
+        child.on("error", (err) => {
+          reject(new Error(`Failed to execute claude: ${err.message}`));
+        });
       });
 
-      child.on("exit", (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`Claude exited with code ${code}`));
-        }
-      });
-
-      child.on("error", (err) => {
-        reject(new Error(`Failed to execute claude: ${err.message}`));
-      });
-    });
-
-    logger.success("Task completed successfully");
+      logger.success("Task completed successfully");
+    }
   } catch (error) {
     logger.error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
