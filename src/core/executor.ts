@@ -44,17 +44,19 @@ export async function executeAI(
   ];
 
   // Add output format based on log option
+  // Note: stream-json requires --verbose when using --print
   if (options.log) {
     args.push("--output-format", "stream-json");
-    logger.info("Using stream-json output format for detailed logging");
+    args.push("--verbose"); // Required for stream-json with --print
+    logger.info("Using stream-json output format with verbose mode");
   } else {
     args.push("--output-format", "json");
-  }
 
-  // Add verbose flag if requested
-  if (options.verbose) {
-    args.push("--verbose");
-    logger.info("Verbose mode enabled");
+    // Add verbose flag if requested (only when not using log)
+    if (options.verbose) {
+      args.push("--verbose");
+      logger.info("Verbose mode enabled");
+    }
   }
 
   // Add session ID if provided (for continuing context)
