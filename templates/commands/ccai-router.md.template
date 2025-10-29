@@ -35,8 +35,8 @@ for provider in provider1 provider2; do
   echo "Getting plan from $provider..."
   ccai merge-prompts --provider $provider --plan-only > /tmp/prompt-$provider.md
   claude --settings "$(ccai merge-settings $provider)" \
-    --system-prompt "$(< /tmp/prompt-$provider.md)" \
-    -p "Analyze this task and provide an execution plan with cost estimation: $(< /tmp/task.md)"
+    --system-prompt "/tmp/prompt-$provider.md)" \
+    -p "Analyze this task and provide an execution plan with cost estimation: /tmp/task.md)"
 done
 ```
 

@@ -32,16 +32,16 @@ Run the following command and capture the JSON output:
 
 ```bash
 # Basic execution (no task type)
-RESULT=$(npx ccai run --provider {{PROVIDER}} "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
+RESULT=$(npx ccai run --provider {{PROVIDER}} --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
 
 # With task-specific enhancement (if applicable)
 # Choose the appropriate task type based on the task:
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example web-scraping "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example code-generation "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example data-processing "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example code-analysis "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example documentation-research "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example visual-inspection "$(< /tmp/ccai-task-{{PROVIDER}}.md)")
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example web-scraping --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example code-generation --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example data-processing --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example code-analysis --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example documentation-research --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+# RESULT=$(npx ccai run --provider {{PROVIDER}} --example visual-inspection --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
 
 # Parse the JSON result
 echo "$RESULT" > /tmp/ccai-result-{{PROVIDER}}.json
@@ -103,7 +103,9 @@ $(date)
 $SESSION_ID
 
 ## Task Description
-$(< /tmp/ccai-task-{{PROVIDER}}.md)
+\`\`\`
+$(cat /tmp/ccai-task-{{PROVIDER}}.md)
+\`\`\`
 
 ## Result
 - Status: $SUBTYPE
