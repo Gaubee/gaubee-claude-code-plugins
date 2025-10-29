@@ -1,3 +1,4 @@
+import pc from "picocolors";
 import type { ClaudeOutput, ClaudeResultOutput } from "./json-formatter.js";
 import { logger } from "./logger.js";
 
@@ -150,15 +151,16 @@ let messageCounter = 0;
  * Handles different message types appropriately
  */
 export function formatMessageWithTemplate(message: ClaudeOutput, template?: string): void {
+  const line = process.stdout.isTTY ? pc.magenta("-".repeat(process.stdout.columns)) : "---";
   if (isResultMessage(message)) {
     // Format result messages with full template
-    console.log("─────────────────────────────────────────────────────────────");
+    console.log(line);
     formatWithTemplate(message as ClaudeResultOutput, template);
   } else if (message.type === "system") {
     // Format system messages with basic info
     const systemMsg = message as any;
     messageCounter = 0; // Reset counter on system init
-    console.log("─────────────────────────────────────────────────────────────");
+    console.log(line);
     console.log(`[System Init]`);
     console.log(`  Session: ${systemMsg.session_id || "N/A"}`);
     if (systemMsg.model) {
@@ -173,7 +175,7 @@ export function formatMessageWithTemplate(message: ClaudeOutput, template?: stri
     const assistantMsg = message as any;
     const content = assistantMsg.message?.content || [];
 
-    console.log("─────────────────────────────────────────────────────────────");
+    console.log(line);
     console.log(`[Turn ${messageCounter}] Assistant`);
 
     for (const item of content) {
@@ -210,12 +212,12 @@ export function formatMessageWithTemplate(message: ClaudeOutput, template?: stri
     }
   } else if (message.type === "user") {
     // Format user messages (tool results)
-    console.log("─────────────────────────────────────────────────────────────");
+    console.log(line);
     console.log(`[Turn ${messageCounter}] Tool Results`);
     // Don't increment counter for user messages
   } else {
     // For other message types, output a simple notification
-    console.log("─────────────────────────────────────────────────────────────");
+    console.log(line);
     console.log(`[${(message as any).type || "Unknown"}] ${(message as any).subtype || ""}`);
   }
 }

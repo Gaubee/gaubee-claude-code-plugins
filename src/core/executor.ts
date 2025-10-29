@@ -37,11 +37,7 @@ export async function executeAI(
   }
 
   // 4. Prepare execution arguments
-  const args = [
-    "--dangerously-skip-permissions",
-    "--settings",
-    settingsPath,
-  ];
+  const args = ["--dangerously-skip-permissions", "--settings", settingsPath];
 
   // Add output format based on log option
   // Note: stream-json requires --verbose when using --print
@@ -55,7 +51,7 @@ export async function executeAI(
 
   // Add session ID if provided (for continuing context)
   if (options.sessionId) {
-    args.push("--session-id", options.sessionId);
+    args.push("--resume", options.sessionId);
     logger.info(`Continuing session: ${options.sessionId}`);
   }
 
