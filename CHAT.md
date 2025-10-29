@@ -1275,10 +1275,14 @@ function getLogRequirementPrompt(provider: string): string {
 
 #### 2.3 命令调用（更新后）
 
+**方案一：使用 spawn（推荐，兼容性更好）**
+
 ```typescript
-export function executeAI(provider: string, task: string, options?: {
+import { spawn } from 'node:child_process'
+
+export async function executeAI(provider: string, task: string, options?: {
   taskType?: PromptMergeOptions['taskType']
-}) {
+}): Promise<void> {
   // 1. 合并 Settings
   const settingsPath = mergeSettings(provider)
 
@@ -1288,18 +1292,116 @@ export function executeAI(provider: string, task: string, options?: {
     taskType: options?.taskType,
   })
 
-  // 3. 写入临时提示词文件
-  const promptPath = path.join(os.tmpdir(), `ccai-prompt-${provider}.md`)
-  fs.writeFileSync(promptPath, systemPrompt, 'utf-8')
+  // 3. 准备执行参数（使用 args 数组，避免 shell 注入风险）
+  const args = [
+    '--dangerously-skip-permissions',
+    '--settings', settingsPath,
+    '--output-format', 'json',
+    '--system-prompt', systemPrompt,  // 直接传递字符串，无需文件
+    '-p', task
+  ]
 
   // 4. 执行 Claude
-  execSync(`claude --dangerously-skip-permissions \
-    --settings ${settingsPath} \
-    --output-format json \
-    --system-prompt "$(< ${promptPath})" \
-    -p "${task}"`, { stdio: 'inherit' })
+  return new Promise((resolve, reject) => {
+    const child = spawn('claude', args, {
+      stdio: 'inherit',
+      shell: false  // 不使用 shell，更安全
+    })
+
+    child.on('exit', (code) => {
+      if (code === 0) {
+        resolve()
+      } else {
+        reject(new Error(`Claude exited with code ${code}`))
+      }
+    })
+
+    child.on('error', reject)
+  })
 }
 ```
+
+**方案二：如果系统提示词太长，使用文件传递**
+
+```typescript
+import { spawn } from 'node:child_process'
+import { writeFileSync, unlinkSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+export async function executeAI(provider: string, task: string, options?: {
+  taskType?: PromptMergeOptions['taskType']
+}): Promise<void> {
+  // 1. 合并 Settings
+  const settingsPath = mergeSettings(provider)
+
+  // 2. 合并系统提示词
+  const systemPrompt = mergeSystemPrompts({
+    provider,
+    taskType: options?.taskType,
+  })
+
+  // 3. 如果系统提示词超过 32KB，写入临时文件
+  const useFile = systemPrompt.length > 32 * 1024
+  let promptPath: string | undefined
+
+  if (useFile) {
+    promptPath = join(tmpdir(), `ccai-prompt-${provider}-${Date.now()}.md`)
+    writeFileSync(promptPath, systemPrompt, 'utf-8')
+  }
+
+  // 4. 准备执行参数
+  const args = [
+    '--dangerously-skip-permissions',
+    '--settings', settingsPath,
+    '--output-format', 'json'
+  ]
+
+  if (useFile && promptPath) {
+    args.push('--system-prompt-file', promptPath)  // 假设支持文件参数
+  } else {
+    args.push('--system-prompt', systemPrompt)
+  }
+
+  args.push('-p', task)
+
+  // 5. 执行 Claude
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn('claude', args, {
+        stdio: 'inherit',
+        shell: false
+      })
+
+      child.on('exit', (code) => {
+        if (code === 0) {
+          resolve()
+        } else {
+          reject(new Error(`Claude exited with code ${code}`))
+        }
+      })
+
+      child.on('error', reject)
+    })
+  } finally {
+    // 清理临时文件
+    if (promptPath) {
+      try {
+        unlinkSync(promptPath)
+      } catch (err) {
+        // 忽略清理错误
+      }
+    }
+  }
+}
+```
+
+**优点**：
+- ✅ **安全性**：使用 args 数组，避免 shell 注入风险
+- ✅ **兼容性**：不依赖 shell 的特定语法（如 `$(< file)`）
+- ✅ **可靠性**：参数传递更明确，不会受 shell 转义影响
+- ✅ **跨平台**：`shell: false` 确保在 Windows/Linux/macOS 上行为一致
+- ✅ **错误处理**：更好的进程管理和错误捕获
 
 **任务类型自动检测**：
 
@@ -1410,17 +1512,31 @@ Options:
    - [ ] `npx ccai enable <provider>` - 启用指定提供商
      - 修改 `~/.claude/ccai/settings-{provider}.json`
      - 设置 `ccai.disabled: false`
+     - 执行 `ccai update`
+     - 启用后应该会有`/ccai-<provider>`这个command
    - [ ] `npx ccai disable <provider>` - 禁用指定提供商
      - 修改 `~/.claude/ccai/settings-{provider}.json`
      - 设置 `ccai.disabled: true`
-     - 禁用后该 provider 不会出现在智能路由的选项中
+     - 执行 `ccai update`
+     - 禁用后该 provider 不会出现在智能路由的选项中，`/ccai-<provider>`这个command也不该有
    - [ ] `npx ccai get <provider>` - 查看提供商配置
      - 打印配置文件路径：`~/.claude/ccai/settings-{provider}.json`
      - 打印完整配置内容（格式化 JSON）
      - 用于调试和检查配置
-   - [ ] `npx ccai update` - 更新模板
-     - 检测本地与 npm 包版本差异
-     - 智能合并：保留用户自定义，更新系统文件
+   - [ ] `npx ccai update` - 更新模板和命令文件
+     - **主要职责**：
+       1. 检测本地与 npm 包版本差异
+       2. 智能合并：保留用户自定义配置，更新系统文件（skills、routing.md 等）
+       3. **重新生成所有 provider 命令文件**（基于 enabled/disabled 状态）
+     - **命令文件生成逻辑**：
+       - 扫描 `~/.claude/ccai/settings-*.json`
+       - 对于 `disabled: false` 的 provider：生成 `~/.claude/commands/ccai-{provider}.md`
+       - 对于 `disabled: true` 的 provider：删除 `~/.claude/commands/ccai-{provider}.md`（如果存在）
+       - 更新 `~/.claude/commands/ccai.md`（智能路由命令，汇总所有 enabled 的 providers）
+     - **调用时机**：
+       - 用户手动执行 `npx ccai update`
+       - `ccai enable <provider>` 和 `ccai disable <provider>` 自动调用
+       - npm 包升级后提示用户执行
 
 **内部命令**（供命令文件调用）：
    - [ ] `npx ccai merge-settings <provider>` - 生成合并配置
