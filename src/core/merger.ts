@@ -11,6 +11,7 @@ import {
   readJsonFile,
   writeJsonFile,
 } from "@/utils/fs.js";
+import { logger } from "@/utils/logger";
 import { isArray, mergeWith } from "lodash";
 import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -92,6 +93,8 @@ This plan will be used to evaluate which provider is best suited for the task.`)
     if (await fileExists(examplePath)) {
       const content = await readFile(examplePath, "utf-8");
       prompts.push(content);
+    } else {
+      logger.warning(`No found taskType: ${options.taskType}`);
     }
   }
 
