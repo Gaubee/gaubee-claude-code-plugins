@@ -17,7 +17,7 @@ description: {{DESCRIPTION}}
 
 ### Method 1: Standard Execution
 ```bash
-RESULT=$(npx ccai run --provider {{PROVIDER}} --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+RESULT=$(npx -y ccai run --provider {{PROVIDER}} --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
 ```
 
 ### Method 2: Enhanced Execution (Recommended for specialized tasks)
@@ -30,12 +30,12 @@ RESULT=$(npx ccai run --provider {{PROVIDER}} --prompt-file /tmp/ccai-task-{{PRO
 # Documentation: --example documentation-research
 # Visual inspection: --example visual-inspection
 
-RESULT=$(npx ccai run --provider {{PROVIDER}} --example [task-type] --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+RESULT=$(npx -y ccai run --provider {{PROVIDER}} --example [task-type] --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
 ```
 
 ### Method 3: Session Continuation (for complex/multi-step tasks)
 ```bash
-RESULT=$(npx ccai run --provider {{PROVIDER}} --session-id [existing-session-id] --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+RESULT=$(npx -y ccai run --provider {{PROVIDER}} --session-id [existing-session-id] --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
 ```
 
 ## Error Handling & Recovery
@@ -64,13 +64,13 @@ EOF
 **Permission Issues:**
 ```bash
 # Continue with same session
-npx ccai run --provider {{PROVIDER}} --session-id "$SESSION_ID" --prompt-file /tmp/ccai-task-{{PROVIDER}}.md
+npx -y ccai run --provider {{PROVIDER}} --session-id "$SESSION_ID" --prompt-file /tmp/ccai-task-{{PROVIDER}}.md
 ```
 
 **Tool/Parameter Errors:**
 ```bash
 # Fix and retry with context
-npx ccai run --provider {{PROVIDER}} --session-id "$SESSION_ID" "
+npx -y ccai run --provider {{PROVIDER}} --session-id "$SESSION_ID" "
 Previous error: $RESULT_TEXT
 
 Please fix by: [intelligent fix based on error analysis]
