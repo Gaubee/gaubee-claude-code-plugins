@@ -11,8 +11,7 @@ export function createRunCommand(): Command {
     .option("--example <type>", "Task type example to enhance prompt")
     .option("--session-id <uuid>", "Continue from a previous session")
     .option("--plan-only", "Generate execution plan only (for intelligent routing)")
-    .option("--log", "Enable detailed logging with stream-json output format")
-    .option("--verbose", "Enable verbose output from claude CLI")
+    .option("--log", "Enable detailed logging with stream-json output format (auto-enables verbose)")
     .argument("[prompt...]", "Task prompt (can be multiple arguments, or enter REPL mode if omitted)")
     .action(async (promptArgs: string[], options) => {
       try {
@@ -52,7 +51,6 @@ export function createRunCommand(): Command {
           sessionId: options.sessionId,
           planOnly: options.planOnly,
           log: options.log,
-          verbose: options.verbose,
         });
       } catch (error) {
         logger.error(

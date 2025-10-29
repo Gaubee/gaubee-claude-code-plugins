@@ -51,12 +51,6 @@ export async function executeAI(
     logger.info("Using stream-json output format with verbose mode");
   } else {
     args.push("--output-format", "json");
-
-    // Add verbose flag if requested (only when not using log)
-    if (options.verbose) {
-      args.push("--verbose");
-      logger.info("Verbose mode enabled");
-    }
   }
 
   // Add session ID if provided (for continuing context)
