@@ -65,7 +65,7 @@ export async function installAllTemplates(
   const routingExampleKey = "ccai/routing.md.example" as TemplateKey;
   const routingPath = join(ccaiDir, "routing.md");
 
-  if (!(await fileExists(routingPath))) {
+  if (overwrite || !(await fileExists(routingPath))) {
     const content = templates[routingExampleKey];
     await writeTextFile(routingPath, content, context);
     installedCount++;
@@ -83,6 +83,9 @@ export async function installAllTemplates(
   logger.success(`Installed ${installedCount} files`);
   if (skippedCount > 0) {
     logger.info(`Skipped ${skippedCount} existing files`);
+    console.log();
+    logger.warning(`To overwrite existing files, run with --force flag:`);
+    logger.command("ccai init --force");
   }
 
   logger.section("Next Steps");
