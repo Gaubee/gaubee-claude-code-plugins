@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "gaubee-claude-code-plugins",
+  "owner": {
+    "name": "Gaubee"
+  },
+  "plugins": [
+    {
+      "name": "ai-delegation",
+      "source": "./plugins/ai-delegation",
+      "description": "Automatically identify tool-intensive tasks with clear boundaries and delegate them to cost-efficient AI providers for execution. Triggers on batch operations (WebFetch, Read, Write, Edit, Bash, MCP, etc.), data processing, code generation, code analysis, and web scraping tasks, chrome-devtools-mcp tasks."
+    },
+    {
+      "name": "glm",
+      "source": "./plugins/glm",
+      "description": "GLM-4.6 AI provider plugin for cost-efficient task delegation. Includes /glm slash command and system prompt for executing tool-intensive tasks."
+    },
+    {
+      "name": "minimax",
+      "source": "./plugins/minimax",
+      "description": "MiniMax AI provider plugin for cost-efficient task delegation. Includes /minimax slash command and system prompt for executing tool-intensive tasks."
+    }
+  ]
+}
