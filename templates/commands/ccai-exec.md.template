@@ -4,137 +4,116 @@ description: {{DESCRIPTION}}
 
 {{PROVIDER_INFO}}
 
-## Context
+## Quick Execution Guide
 
-This command is used when:
-- The task is tool-intensive (many Read/Write/WebFetch/Grep operations)
-- The task has clear boundaries (well-defined inputs/outputs)
-- Verification is simple (file list, spot-check, statistics)
-- Cost(Delegation + Verification) < Cost(Direct Execution)
+**You are a sophisticated AI agent** with access to powerful tools. Use your intelligence to:
 
-Refer to `~/.claude/skills/ccai/SKILL.md` for decision criteria.
+1. **Analyze the task requirements** and determine the optimal approach
+2. **Select the best execution method** based on task characteristics
+3. **Execute efficiently** and handle any errors gracefully
+4. **Verify results** intelligently and provide meaningful feedback
 
-## Available Task Types
+## Execution Methods
 
-You can enhance the system prompt with task-specific examples:
-
-{{EXAMPLES_LIST}}
-
-## Execution Steps
-
-**Step 1: Prepare Task Prompt**
-
-Write **Task Description($ARGUMENTS)** to `/tmp/ccai-task-{{PROVIDER}}.md`
-
-**Step 2: Execute {{PROVIDER}} via Bash**
-
-Run the following command and capture the JSON output:
-
+### Method 1: Standard Execution
 ```bash
-# Basic execution (no task type)
 RESULT=$(npx ccai run --provider {{PROVIDER}} --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
-
-# With task-specific enhancement (if applicable)
-# Choose the appropriate task type based on the task:
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example web-scraping --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example code-generation --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example data-processing --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example code-analysis --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example documentation-research --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
-# RESULT=$(npx ccai run --provider {{PROVIDER}} --example visual-inspection --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
-
-# Parse the JSON result
-echo "$RESULT" > /tmp/ccai-result-{{PROVIDER}}.json
 ```
 
-**Step 3: Check for Errors and Handle Recovery**
-
-Parse the JSON output to check for errors:
-
+### Method 2: Enhanced Execution (Recommended for specialized tasks)
 ```bash
-# Extract key fields from JSON
-IS_ERROR=$(echo "$RESULT" | jq -r '.is_error')
-SESSION_ID=$(echo "$RESULT" | jq -r '.session_id')
-RESULT_TEXT=$(echo "$RESULT" | jq -r '.result')
-SUBTYPE=$(echo "$RESULT" | jq -r '.subtype')
+# Choose based on task characteristics:
+# Web scraping: --example web-scraping
+# Code generation: --example code-generation
+# Data processing: --example data-processing
+# Code analysis: --example code-analysis
+# Documentation: --example documentation-research
+# Visual inspection: --example visual-inspection
+
+RESULT=$(npx ccai run --provider {{PROVIDER}} --example [task-type] --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
 ```
 
-**If execution failed (`is_error: true`):**
-
-1. **Analyze the error**:
-   - Check `subtype` for error type (e.g., "tool_error", "timeout", "permission_denied")
-   - Review `result` for error details
-   - Check `permission_denials` array for specific permission issues
-
-2. **Provide recovery guidance**:
-   - For **tool errors**: Suggest fixing the tool call parameters or file paths
-   - For **permission errors**: Guide user to grant necessary permissions
-   - For **timeout errors**: Suggest breaking task into smaller steps
-   - For **other errors**: Provide specific troubleshooting based on error message
-
-3. **Offer to retry with session context**:
-   ```bash
-   # If you want to retry with fixes, use the session_id to continue:
-   npx ccai run --provider {{PROVIDER}} --session-id "$SESSION_ID" "
-   Based on the previous error: $RESULT_TEXT
-
-   Please fix the issue by:
-   [Your specific fix instructions here]
-   "
-   ```
-
-**If execution succeeded (`is_error: false`):**
-
-Proceed to Step 4.
-
-**Step 4: Save Task Log**
-
-Save the execution log to:
+### Method 3: Session Continuation (for complex/multi-step tasks)
 ```bash
+RESULT=$(npx ccai run --provider {{PROVIDER}} --session-id [existing-session-id] --prompt-file /tmp/ccai-task-{{PROVIDER}}.md)
+```
+
+## Error Handling & Recovery
+
+### Parse Results
+```bash
+# Quick status check
+IS_ERROR=$(echo "$RESULT" | jq -r '.is_error // false')
+SUBTYPE=$(echo "$RESULT" | jq -r '.subtype // "unknown"')
+SESSION_ID=$(echo "$RESULT" | jq -r '.session_id // "N/A"')
+RESULT_TEXT=$(echo "$RESULT" | jq -r '.result // ""')
+
+# Optional: Save detailed log
 LOG_FILE=~/.claude/ccai/log/{{PROVIDER}}-$(date +%Y-%m-%d_%H-%M-%S).md
-
 cat > "$LOG_FILE" <<EOF
-# Task Execution Log - {{PROVIDER}}
-
-## Execution Time
-$(date)
-
-## Session ID
-$SESSION_ID
-
-## Task Description
-\`\`\`
-$(cat /tmp/ccai-task-{{PROVIDER}}.md)
-\`\`\`
-
-## Result
-- Status: $SUBTYPE
-- Error: $IS_ERROR
-- Output: $RESULT_TEXT
-
-## Full JSON Output
-\`\`\`json
-$RESULT
-\`\`\`
+# {{PROVIDER}} Execution - $(date)
+Session: $SESSION_ID
+Status: $SUBTYPE
+Output: $RESULT_TEXT
+Full: $RESULT
 EOF
 ```
 
-**Step 5: Return Results**
+### Error Recovery Strategies
 
-Based on the execution result:
+**Permission Issues:**
+```bash
+# Continue with same session
+npx ccai run --provider {{PROVIDER}} --session-id "$SESSION_ID" --prompt-file /tmp/ccai-task-{{PROVIDER}}.md
+```
 
-**If successful:**
-1. Review the output from `result` field
-2. Perform quick verification (file count, spot-check, statistics)
-3. Report completion status to the user
-4. Provide the `session_id` if user might need to continue this context
+**Tool/Parameter Errors:**
+```bash
+# Fix and retry with context
+npx ccai run --provider {{PROVIDER}} --session-id "$SESSION_ID" "
+Previous error: $RESULT_TEXT
 
-**If failed:**
-1. Explain the error clearly to the user
-2. Provide specific recovery steps based on error type
-3. Offer to retry with the `session_id` if appropriate
-4. Ask user if they want you to attempt automatic recovery
+Please fix by: [intelligent fix based on error analysis]
+Continue the task: [remaining requirements]
+"
+```
 
-## Task Description($ARGUMENTS)
+**Complex Task Decomposition:**
+Break down into smaller, manageable steps and execute sequentially.
 
+## Verification & Quality Control
+
+### Automated Checks
+- **Content Verification**: Check file existence, content quality, completeness
+- **Format Validation**: Ensure output meets expected format standards
+- **Error Detection**: Identify and flag potential issues
+
+### Smart Validation Patterns
+- **For code files**: Check syntax, imports, basic functionality
+- **For data**: Verify structure, completeness, accuracy
+- **For documentation**: Ensure clarity, completeness, relevance
+- **For analysis**: Validate insights, recommendations, actionability
+
+## Best Practices
+
+1. **Pre-execution Analysis**: Choose the most appropriate method
+2. **Session Management**: Use `--session-id` for multi-step tasks
+3. **Error Intelligence**: Analyze errors, provide specific fixes
+4. **Quality Assurance**: Implement smart verification tailored to output type
+5. **User Communication**: Provide clear, actionable feedback
+
+## Available Task Types
+
+{{EXAMPLES_LIST}}
+
+## Execute Task
+
+**Task Description($ARGUMENTS)**
 $ARGUMENTS
+
+---
+
+**Execution Command:**
+```bash
+# Choose and execute the appropriate method above
+```
