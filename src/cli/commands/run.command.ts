@@ -14,6 +14,7 @@ export function createRunCommand(): Command {
     .option("--log", "Enable detailed logging with stream-json output format (auto-enables verbose)")
     .option("--pretty-json", "Format JSON output in a human-readable way")
     .option("--format [template]", "Format output using template (default shows key info)")
+    .option("--prompt-file <path>", "Read prompt from file instead of arguments")
     .argument("[prompt...]", "Task prompt (can be multiple arguments, or enter REPL mode if omitted)")
     .action(async (promptArgs: string[], options) => {
       try {
@@ -39,12 +40,29 @@ export function createRunCommand(): Command {
           }
         }
 
-        // Combine prompt arguments
-        let prompt = promptArgs.join(" ").trim();
+        // Get prompt from file, arguments, or REPL
+        let prompt = "";
 
-        // If no prompt provided, enter REPL mode
-        if (!prompt) {
-          prompt = await startREPL();
+        if (options.promptFile) {
+          // Read from file
+          try {
+            const { readFile } = await import("node:fs/promises");
+            prompt = await readFile(options.promptFile, "utf-8");
+            logger.info(`Loaded prompt from: ${logger.path(options.promptFile)}`);
+          } catch (error) {
+            logger.error(
+              `Failed to read prompt file: ${error instanceof Error ? error.message : String(error)}`
+            );
+            process.exit(1);
+          }
+        } else {
+          // Combine prompt arguments
+          prompt = promptArgs.join(" ").trim();
+
+          // If no prompt provided, enter REPL mode
+          if (!prompt) {
+            prompt = await startREPL();
+          }
         }
 
         // Execute task

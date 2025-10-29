@@ -164,5 +164,57 @@ describe("run.command", () => {
         taskType: "code-generation",
       });
     });
+
+    it("should read prompt from file when --prompt-file is provided", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      // Mock readFile
+      const mockReadFile = vi.fn().mockResolvedValue("prompt content from file");
+      vi.doMock("node:fs/promises", () => ({
+        readFile: mockReadFile,
+      }));
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "--prompt-file", "/path/to/prompt.txt"],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("glm", "prompt content from file", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+      });
+    });
+
+    it("should fail if prompt file does not exist", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { logger } = await import("@/utils/logger.js");
+
+      // Mock readFile to throw error
+      const mockReadFile = vi.fn().mockRejectedValue(new Error("File not found"));
+      vi.doMock("node:fs/promises", () => ({
+        readFile: mockReadFile,
+      }));
+
+      const command = createRunCommand();
+      command.exitOverride();
+
+      try {
+        await command.parseAsync(
+          ["--provider", "glm", "--prompt-file", "/nonexistent/file.txt"],
+          { from: "user" }
+        );
+      } catch (error) {
+        // Expected to throw
+      }
+
+      expect(logger.error).toHaveBeenCalled();
+    });
   });
 });
