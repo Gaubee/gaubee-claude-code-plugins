@@ -6,9 +6,6 @@ settings:
 
 catalogs:
   default:
-    '@anthropic-ai/claude-agent-sdk':
-      specifier: 'catalog:'
-      version: 0.1.28
     lodash:
       specifier: npm:lodash-es@^4.17.21
       version: 4.17.21
@@ -30,7 +27,7 @@ importers:
   .:
     dependencies:
       '@anthropic-ai/claude-agent-sdk':
-        specifier: 'catalog:'
+        specifier: ^0.1.28
         version: 0.1.28(zod@4.1.12)
       commander:
         specifier: ^12.1.0

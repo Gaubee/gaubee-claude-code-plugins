@@ -1,6 +1,6 @@
 {
   "name": "ccai",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Claude Code AI Assistant - Intelligent AI provider management and routing tool",
   "type": "module",
   "bin": {
@@ -13,6 +13,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "pub": "pnpm publish --access publish --no-git-checks",
     "generate:templates": "tsx scripts/generate-templates.ts",
     "prebuild": "pnpm generate:templates",
     "build": "rolldown -c rolldown.config.ts",
@@ -39,7 +40,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.18.1",
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "catalog:",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.28",
     "commander": "^12.1.0",
     "lodash": "catalog:",
     "picocolors": "^1.1.1",
