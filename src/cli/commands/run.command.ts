@@ -13,6 +13,7 @@ export function createRunCommand(): Command {
     .option("--plan-only", "Generate execution plan only (for intelligent routing)")
     .option("--log", "Enable detailed logging with stream-json output format (auto-enables verbose)")
     .option("--pretty-json", "Format JSON output in a human-readable way")
+    .option("--format [template]", "Format output using template (default shows key info)")
     .argument("[prompt...]", "Task prompt (can be multiple arguments, or enter REPL mode if omitted)")
     .action(async (promptArgs: string[], options) => {
       try {
@@ -53,6 +54,7 @@ export function createRunCommand(): Command {
           planOnly: options.planOnly,
           log: options.log,
           prettyJson: options.prettyJson,
+          format: options.format,
         });
       } catch (error) {
         logger.error(

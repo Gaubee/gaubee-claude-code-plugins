@@ -74,9 +74,10 @@ export async function executeAI(
   // 5. Execute Claude
   logger.info("Starting Claude execution...");
   try {
-    // If pretty-json is enabled, capture output instead of inherit
-    if (options.prettyJson) {
+    // If pretty-json or format is enabled, capture output instead of inherit
+    if (options.prettyJson || options.format !== undefined) {
       const { parseAndFormatOutput } = await import("@/utils/json-formatter.js");
+      const { parseAndFormatWithTemplate } = await import("@/utils/template-formatter.js");
 
       await new Promise<void>((resolve, reject) => {
         const child = spawn("claude", args, {
@@ -97,8 +98,15 @@ export async function executeAI(
 
         child.on("exit", (code) => {
           if (code === 0) {
-            // Parse and format the JSON output
-            parseAndFormatOutput(stdout);
+            // Format output based on option
+            if (options.format !== undefined) {
+              // Use template formatter (with custom template if provided)
+              const template = typeof options.format === "string" ? options.format : undefined;
+              parseAndFormatWithTemplate(stdout, template);
+            } else {
+              // Use pretty-json formatter
+              parseAndFormatOutput(stdout);
+            }
             resolve();
           } else {
             // Show error output
