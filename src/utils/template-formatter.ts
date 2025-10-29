@@ -142,6 +142,9 @@ function isResultMessage(message: ClaudeOutput): boolean {
   return message.type === "result";
 }
 
+// Counter for message numbering
+let messageCounter = 0;
+
 /**
  * Format a single message with template
  * Handles different message types appropriately
@@ -149,29 +152,70 @@ function isResultMessage(message: ClaudeOutput): boolean {
 export function formatMessageWithTemplate(message: ClaudeOutput, template?: string): void {
   if (isResultMessage(message)) {
     // Format result messages with full template
+    console.log("─────────────────────────────────────────────────────────────");
     formatWithTemplate(message as ClaudeResultOutput, template);
   } else if (message.type === "system") {
     // Format system messages with basic info
     const systemMsg = message as any;
-    console.log(`[System] ${systemMsg.subtype || "init"} - Session: ${systemMsg.session_id || "N/A"}`);
+    messageCounter = 0; // Reset counter on system init
+    console.log("─────────────────────────────────────────────────────────────");
+    console.log(`[System Init]`);
+    console.log(`  Session: ${systemMsg.session_id || "N/A"}`);
     if (systemMsg.model) {
       console.log(`  Model: ${systemMsg.model}`);
     }
+    if (systemMsg.permissionMode) {
+      console.log(`  Permission: ${systemMsg.permissionMode}`);
+    }
   } else if (message.type === "assistant") {
-    // Format assistant messages with basic info
+    // Format assistant messages with detailed content
+    messageCounter++;
     const assistantMsg = message as any;
-    const hasThinking = assistantMsg.message?.content?.some((c: any) => c.type === "thinking");
-    const hasText = assistantMsg.message?.content?.some((c: any) => c.type === "text");
-    const hasToolUse = assistantMsg.message?.content?.some((c: any) => c.type === "tool_use");
+    const content = assistantMsg.message?.content || [];
 
-    const parts: string[] = [];
-    if (hasThinking) parts.push("thinking");
-    if (hasText) parts.push("text");
-    if (hasToolUse) parts.push("tool_use");
+    console.log("─────────────────────────────────────────────────────────────");
+    console.log(`[Turn ${messageCounter}] Assistant`);
 
-    console.log(`[Assistant] ${parts.join(", ") || "message"}`);
+    for (const item of content) {
+      if (item.type === "thinking") {
+        console.log("\n💭 Thinking:");
+        const thinking = item.thinking || "";
+        // Truncate long thinking to first 300 chars
+        if (thinking.length > 300) {
+          console.log(`  ${thinking.substring(0, 300)}...`);
+        } else {
+          console.log(`  ${thinking}`);
+        }
+      } else if (item.type === "text") {
+        console.log("\n💬 Response:");
+        const text = item.text || "";
+        console.log(`  ${text}`);
+      } else if (item.type === "tool_use") {
+        console.log(`\n🔧 Tool Use: ${item.name || "unknown"}`);
+        if (item.input) {
+          const input = item.input as Record<string, unknown>;
+          // Show key parameters
+          const keys = Object.keys(input).slice(0, 3);
+          for (const key of keys) {
+            const value = input[key];
+            const valueStr = typeof value === "string" ? value : JSON.stringify(value);
+            const truncated = valueStr.length > 100 ? valueStr.substring(0, 100) + "..." : valueStr;
+            console.log(`  ${key}: ${truncated}`);
+          }
+          if (Object.keys(input).length > 3) {
+            console.log(`  ... and ${Object.keys(input).length - 3} more parameters`);
+          }
+        }
+      }
+    }
+  } else if (message.type === "user") {
+    // Format user messages (tool results)
+    console.log("─────────────────────────────────────────────────────────────");
+    console.log(`[Turn ${messageCounter}] Tool Results`);
+    // Don't increment counter for user messages
   } else {
     // For other message types, output a simple notification
+    console.log("─────────────────────────────────────────────────────────────");
     console.log(`[${(message as any).type || "Unknown"}] ${(message as any).subtype || ""}`);
   }
 }
