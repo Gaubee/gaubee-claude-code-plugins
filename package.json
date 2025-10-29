@@ -15,8 +15,8 @@
   "scripts": {
     "pub": "pnpm publish --access publish --no-git-checks",
     "generate:templates": "tsx scripts/generate-templates.ts",
-    "prebuild": "pnpm generate:templates",
     "build": "rolldown -c rolldown.config.ts",
+    "build:watch": "rolldown -c rolldown.config.ts --watch",
     "dev": "pnpm generate:templates && tsx src/index.ts",
     "ccai": "tsx src/index.ts",
     "test": "vitest run",

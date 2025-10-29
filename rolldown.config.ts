@@ -1,6 +1,7 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "rolldown";
+import { generateTemplatesPlugin } from "./scripts/rolldown-plugin-generate-templates.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,8 +28,11 @@ export default defineConfig({
     "node:os",
     "node:child_process",
     "node:url",
+    "node:util",
+    "node:readline",
     "commander",
     "picocolors",
     "zod",
   ],
+  plugins: [generateTemplatesPlugin()],
 });
