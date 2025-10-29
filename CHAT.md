@@ -99,19 +99,47 @@ npx ccai add glm
 3. 生成空的配置文件供用户填写
 
 **配置文件结构**：
+
+```typescript
+// TypeScript 类型定义
+interface ProviderCcaiConfig {
+  name?: string          // Provider 展示名称
+  description?: string   // Provider 能力描述
+  systemPrompt?: string  // Provider 专属系统提示词（会被合并到最顶部）
+  disabled?: boolean     // 是否禁用该 Provider
+}
+
+interface ProviderSettings {
+  ccai: ProviderCcaiConfig
+  env: Record<string, string>
+}
+```
+
 ```json
 {
   "ccai": {
-    "name": "glm",
-    "discription": "擅长 data-processing 和 code-generation",
+    "name": "GLM-4",
+    "description": "GLM-4 是智谱 AI 推出的大语言模型，擅长工具调用、批量任务处理和代码生成。\n\n**优势**：\n- 成本低廉\n- 工具调用熟练\n- 适��批量处理\n\n**适用场景**：\n- Data Processing\n- Code Generation\n- Web Scraping",
+    "systemPrompt": "## GLM-4 模型特性\n\n你是 GLM-4 模型，具备以下特性：\n\n1. **并行工具调用**：你可以同时调用多个工具，充分利用这一能力提高效率\n2. **批量处理优化**：对于重复性任务，使用循环和批处理减少重复逻辑\n3. **成本意识**：你的 token 成本较低，适合处理大批量任务\n\n请充分发挥这些优势完成任务。",
+    "disabled": false
   },
   "env": {
-    "ANTHROPIC_AUTH_TOKEN": "xxx",
-    "ANTHROPIC_BASE_URL": "https://xxx/api",
+    "ANTHROPIC_AUTH_TOKEN": "your-api-key-here",
+    "ANTHROPIC_BASE_URL": "https://open.bigmodel.cn/api/paas/v4/",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
-  },
+  }
 }
 ```
+
+**字段说明**：
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `ccai.name` | `string` | 否 | Provider 展示名称，用于 UI 显示 |
+| `ccai.description` | `string` | 否 | Provider 能力描述，支持 Markdown 格式，会显示在命令文件和路由策略中 |
+| `ccai.systemPrompt` | `string` | 否 | Provider 专属系统提示词，会在 `merge-prompts` 时被合并到**最顶部**，优先级最高 |
+| `ccai.disabled` | `boolean` | 否 | 是否禁用该 Provider，禁用后不会出现在路由选项中，默认 `false` |
+| `env` | `Record<string, string>` | 是 | 环境变量配置，必须包含 `ANTHROPIC_AUTH_TOKEN` 和 `ANTHROPIC_BASE_URL` |
 
 **元数据用途**：
 - `npx ccai list` 命令读取所有提供商的元数据
@@ -495,14 +523,38 @@ ccai/
    - 用户添加 provider 时，基于模板生成特定配置文件
    - 不再内置 `glm` 和 `minimax` 的硬编码配置
 
-**ccai-provider.md.template 示例**：
+#### 1.1 模板文件拆分设计
+
+**核心思想**：将命令模板拆分为可复用的基础模板和动态组合的内容。
+
+**模板文件结构**：
+
+```
+templates/
+├── commands/
+│   ├── ccai-exec.md.template        # 执行命令基础模板（被 ccai.md 和 ccai-{provider}.md 复用）
+│   └── ccai-router.md.template      # 路由策略模板（仅用于 ccai.md）
+├── ccai/
+│   ├── routing.md.example           # 路由策略示例
+│   └── settings-provider.json.template
+└── skills/ai-delegation/
+    ├── SKILL.md
+    └── examples/
+        ├── code-analysis.md
+        ├── code-generation.md
+        ├── documentation-research.md
+        ├── visual-inspection.md
+        └── web-scraping.md
+```
+
+**ccai-exec.md.template**（执行命令基础模板）：
 
 ```markdown
 ---
-description: Delegate task to {{PROVIDER}} for cost-efficient execution
+description: {{DESCRIPTION}}
 ---
 
-You are delegating a task to {{PROVIDER}} for execution.
+{{PROVIDER_INFO}}
 
 ## Context
 
@@ -513,6 +565,12 @@ This command is used when:
 - Cost(Delegation + Verification) < Cost(Direct Execution)
 
 Refer to `~/.claude/skills/ai-delegation/SKILL.md` for decision criteria.
+
+## Available Task Types
+
+You can enhance the system prompt with task-specific examples:
+
+{{EXAMPLES_LIST}}
 
 ## Execution Steps
 
@@ -525,10 +583,18 @@ Write **Task Description($ARGUMENTS)** to `/tmp/ccai-task-{{PROVIDER}}.md`
 Run the following command:
 
 \`\`\`bash
+# Basic execution (no task type)
 claude --dangerously-skip-permissions \
   --settings "$(ccai merge-settings {{PROVIDER}})" \
   --output-format json \
-  --system-prompt "$(ccai merge-prompts {{PROVIDER}})" \
+  --system-prompt "$(ccai merge-prompts --provider {{PROVIDER}})" \
+  -p "$(< /tmp/ccai-task-{{PROVIDER}}.md)"
+
+# With task-specific enhancement (if applicable)
+claude --dangerously-skip-permissions \
+  --settings "$(ccai merge-settings {{PROVIDER}})" \
+  --output-format json \
+  --system-prompt "$(ccai merge-prompts --example web-scraping --provider {{PROVIDER}})" \
   -p "$(< /tmp/ccai-task-{{PROVIDER}}.md)"
 \`\`\`
 
@@ -547,6 +613,168 @@ The {{PROVIDER}} output will be displayed. Your job is to:
 ## Task Description($ARGUMENTS)
 
 $ARGUMENTS
+```
+
+**ccai-router.md.template**（路由策略模板）：
+
+```markdown
+---
+description: Intelligently route tasks to the most suitable AI provider
+---
+
+You are routing a task to the most suitable AI provider based on task characteristics and provider capabilities.
+
+{{PROVIDERS_INFO}}
+
+## Routing Strategy
+
+Read the routing strategy from `~/.claude/ccai/routing.md` for detailed rules and preferences.
+
+## Routing Steps
+
+**Step 1: Analyze Task**
+
+Analyze the user's task to determine:
+- Task type (web-scraping, code-generation, data-processing, etc.)
+- Estimated complexity
+- Tool usage intensity
+- Expected duration
+
+**Step 2: Select Providers**
+
+Based on the task analysis and routing strategy, select 1-3 suitable providers from the available options above.
+
+Filter out disabled providers (where `disabled: true`).
+
+**Step 3: (Optional) Get Execution Plans**
+
+For complex tasks, you may request execution plans from multiple providers:
+
+\`\`\`bash
+for provider in glm minimax; do
+  echo "Getting plan from $provider..."
+  ccai merge-prompts --provider $provider --plan-only > /tmp/prompt-$provider.md
+  claude --settings "$(ccai merge-settings $provider)" \
+    --system-prompt "$(< /tmp/prompt-$provider.md)" \
+    -p "Analyze this task and provide an execution plan with cost estimation: $(< /tmp/task.md)"
+done
+\`\`\`
+
+Compare the plans and select the best one.
+
+**Step 4: Execute Selected Provider**
+
+Use the selected provider's command:
+
+\`\`\`bash
+/ccai-{selected_provider} "$ARGUMENTS"
+\`\`\`
+
+## Task Description($ARGUMENTS)
+
+$ARGUMENTS
+```
+
+**占位符说明**：
+
+| 占位符 | 说明 | 示例值 |
+|--------|------|--------|
+| `{{PROVIDER}}` | Provider 名称 | `glm` |
+| `{{DESCRIPTION}}` | 命令描述 | `Delegate task to GLM for cost-efficient execution` |
+| `{{PROVIDER_INFO}}` | Provider 介绍信息 | 从 `settings-{provider}.json` 的 `ccai` 字段读取 |
+| `{{EXAMPLES_LIST}}` | 可用的 task type 列表 | `- web-scraping\n- code-generation\n...` |
+| `{{PROVIDERS_INFO}}` | 所有 Provider 的介绍 | 汇总所有 settings 的 `ccai` 字段 |
+
+**生成逻辑**：
+
+1. **生成 `ccai.md`**：
+   ```typescript
+   const ccaiExecContent = templates['commands/ccai-exec.md.template']
+     .replace(/{{PROVIDER}}/g, 'selected-provider')
+     .replace(/{{DESCRIPTION}}/g, 'Intelligently route and execute tasks')
+     .replace(/{{PROVIDER_INFO}}/g, '') // 留空，由路由部分提供
+     .replace(/{{EXAMPLES_LIST}}/g, getExamplesList())
+
+   const ccaiRouterContent = templates['commands/ccai-router.md.template']
+     .replace(/{{PROVIDERS_INFO}}/g, getAllProvidersInfo())
+
+   const ccaiContent = ccaiRouterContent + '\n\n---\n\n' + ccaiExecContent
+
+   writeFile('~/.claude/commands/ccai.md', ccaiContent)
+   ```
+
+2. **生成 `ccai-{provider}.md`**：
+   ```typescript
+   const providerSettings = readSettings(provider)
+   const providerInfo = formatProviderInfo(providerSettings.ccai)
+
+   const content = templates['commands/ccai-exec.md.template']
+     .replace(/{{PROVIDER}}/g, provider)
+     .replace(/{{DESCRIPTION}}/g, `Delegate task to ${provider} for cost-efficient execution`)
+     .replace(/{{PROVIDER_INFO}}/g, providerInfo)
+     .replace(/{{EXAMPLES_LIST}}/g, getExamplesList())
+
+   writeFile(`~/.claude/commands/ccai-${provider}.md`, content)
+   ```
+
+**Provider 介绍信息格式化**：
+
+```typescript
+function formatProviderInfo(ccaiConfig: ProviderCcaiConfig): string {
+  if (!ccaiConfig) return ''
+
+  const parts: string[] = []
+
+  if (ccaiConfig.name) {
+    parts.push(`## Provider: ${ccaiConfig.name}`)
+  }
+
+  if (ccaiConfig.description) {
+    parts.push(`\n${ccaiConfig.description}`)
+  }
+
+  if (ccaiConfig.disabled) {
+    parts.push(`\n⚠️ **This provider is currently disabled.**`)
+  }
+
+  return parts.join('\n')
+}
+
+function getAllProvidersInfo(): string {
+  const providers = listProviders() // 扫描 ~/.claude/ccai/settings-*.json
+  const infos: string[] = []
+
+  for (const provider of providers) {
+    const settings = readSettings(provider)
+    if (settings.ccai) {
+      infos.push(`### ${settings.ccai.name || provider}`)
+      infos.push(`- **Status**: ${settings.ccai.disabled ? '❌ Disabled' : '✅ Enabled'}`)
+      if (settings.ccai.description) {
+        infos.push(`- **Description**: ${settings.ccai.description}`)
+      }
+      infos.push('') // 空行
+    }
+  }
+
+  return infos.join('\n')
+}
+```
+
+**Examples 列表生成**：
+
+```typescript
+function getExamplesList(): string {
+  const examples = [
+    'web-scraping',
+    'code-generation',
+    'data-processing',
+    'code-analysis',
+    'documentation-research',
+    'visual-inspection'
+  ]
+
+  return examples.map(ex => `- \`${ex}\``).join('\n')
+}
 ```
 
 **安装流程更新**：
@@ -1167,15 +1395,42 @@ Options:
    - [ ] 提供版本回滚功能
 
 6. **CLI 命令实现**：
+
+**用户命令**：
    - [ ] `npx ccai init` - 初始化安装
+     - 复制所有模板文件到 `~/.claude/`
+     - 创建必要的目录结构
    - [ ] `npx ccai add <provider>` - 添加提供商
+     - 从模板生成 `settings-{provider}.json`
+     - 生成 `ccai-{provider}.md` 命令文件
+     - 提示用户编辑配置
    - [ ] `npx ccai list` - 列出已配置的提供商
-   - [ ] `npx ccai config <provider>` - 配置提供商
+     - 扫描 `~/.claude/ccai/settings-*.json`
+     - 显示每个 provider 的状态（enabled/disabled）、名称、描述
+   - [ ] `npx ccai enable <provider>` - 启用指定提供商
+     - 修改 `~/.claude/ccai/settings-{provider}.json`
+     - 设置 `ccai.disabled: false`
+   - [ ] `npx ccai disable <provider>` - 禁用指定提供商
+     - 修改 `~/.claude/ccai/settings-{provider}.json`
+     - 设置 `ccai.disabled: true`
+     - 禁用后该 provider 不会出现在智能路由的选项中
+   - [ ] `npx ccai get <provider>` - 查看提供商配置
+     - 打印配置文件路径：`~/.claude/ccai/settings-{provider}.json`
+     - 打印完整配置内容（格式化 JSON）
+     - 用于调试和检查配置
    - [ ] `npx ccai update` - 更新模板
-   - [ ] `npx ccai test <provider>` - 测试连接
-   - [ ] `npx ccai execute <provider> --task-type <type>` - 直接执行任务
-   - [ ] `npx ccai merge-settings <provider>` - 生成合并配置（内部命令）
-   - [ ] `npx ccai merge-prompts <provider>` - 生成合并提示词（内部命令）
+     - 检测本地与 npm 包版本差异
+     - 智能合并：保留用户自定义，更新系统文件
+
+**内部命令**（供命令文件调用）：
+   - [ ] `npx ccai merge-settings <provider>` - 生成合并配置
+     - 合并 `~/.claude/settings.json` 和 `~/.claude/ccai/settings-{provider}.json`
+     - 输出临时文件路径到 stdout
+     - 在 `ccai-{provider}.md` 中调用：`claude --settings "$(ccai merge-settings glm)"`
+   - [ ] `npx ccai merge-prompts <provider>` - 生成合并提示词
+     - 合并基础 SKILL.md + task-type 增强 + provider 配置的 systemPrompt
+     - 输出合并后的提示词内容到 stdout
+     - 在 `ccai-{provider}.md` 中调用：`--system-prompt "$(ccai merge-prompts glm)"`
 
 7. **模板系统**：
    - [ ] 实现构建时模板扫描脚本
