@@ -1,9 +1,11 @@
 # Example: UI Layout Analysis
 
 ## Use Case Category
+
 Visual Analysis and Inspection
 
 ## Common Tasks
+
 - Analyzing page layout issues (spacing, alignment, responsiveness)
 - Extracting and comparing CSS styles
 - Taking component screenshots for visual regression testing
@@ -109,6 +111,7 @@ Page: http://localhost:3000/dashboard
 **Screenshot**: ./analysis/header.png
 
 **Issues Found**:
+
 - ❌ Excessive horizontal padding (80px) creates wasted space
 - ❌ User avatar not vertically centered (appears 5px too low)
 - ❌ Inconsistent gap between menu items (varies from 16px to 32px)
@@ -116,6 +119,7 @@ Page: http://localhost:3000/dashboard
 - ✅ Responsive breakpoints work correctly
 
 **CSS Analysis**:
+
 ```css
 /* Current */
 .header {
@@ -132,6 +136,7 @@ Page: http://localhost:3000/dashboard
 ```
 
 **Improvement Suggestions**:
+
 1. Reduce horizontal padding from 80px to 40px
 2. Change `align-items: flex-start` to `align-items: center`
 3. Add `gap: 24px` to flex container for consistent spacing
@@ -142,6 +147,7 @@ Page: http://localhost:3000/dashboard
 **Screenshot**: ./analysis/sidebar.png
 
 **Issues Found**:
+
 - ❌ Menu items have uneven vertical spacing (12px vs 16px)
 - ❌ Active state background extends beyond text (no padding constraint)
 - ❌ Icons not vertically aligned with text
@@ -149,6 +155,7 @@ Page: http://localhost:3000/dashboard
 - ✅ Color contrast meets WCAG AA standards
 
 **CSS Analysis**:
+
 ```css
 /* Current */
 .menu-item {
@@ -165,6 +172,7 @@ Page: http://localhost:3000/dashboard
 ```
 
 **Improvement Suggestions**:
+
 1. Standardize vertical spacing to 16px
 2. Add `align-items: center` to menu item flex containers
 3. Constrain active state background with max-width or padding
@@ -175,31 +183,46 @@ Page: http://localhost:3000/dashboard
 **Screenshot**: ./analysis/main-content.png
 
 **Issues Found**:
+
 - ❌ Content touches the edge on mobile (no padding)
 - ❌ Heading hierarchy unclear (h2 and h3 look too similar)
 - ✅ Grid layout is responsive
 - ✅ Card spacing is consistent
 
 **CSS Analysis**:
+
 ```css
 /* Current */
 .main-content {
   padding: 0;
 }
 
-h2 { font-size: 24px; font-weight: 600; }
-h3 { font-size: 22px; font-weight: 600; }
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+}
+h3 {
+  font-size: 22px;
+  font-weight: 600;
+}
 
 /* Suggested */
 .main-content {
   padding: 24px;
 }
 
-h2 { font-size: 28px; font-weight: 700; }
-h3 { font-size: 20px; font-weight: 600; }
+h2 {
+  font-size: 28px;
+  font-weight: 700;
+}
+h3 {
+  font-size: 20px;
+  font-weight: 600;
+}
 ```
 
 **Improvement Suggestions**:
+
 1. Add 24px padding on all sides (mobile-first)
 2. Increase h2 font-size to 28px and font-weight to 700
 3. Reduce h3 font-size to 20px for better hierarchy
@@ -210,6 +233,7 @@ h3 { font-size: 20px; font-weight: 600; }
 **Screenshot**: ./analysis/data-table.png
 
 **Issues Found**:
+
 - ❌ Table overflows on small screens (not responsive)
 - ❌ Column headers not sticky on scroll
 - ❌ Row hover state color too subtle (hard to see)
@@ -217,6 +241,7 @@ h3 { font-size: 20px; font-weight: 600; }
 - ✅ Border colors are subtle and clean
 
 **CSS Analysis**:
+
 ```css
 /* Current */
 .data-table {
@@ -250,6 +275,7 @@ h3 { font-size: 20px; font-weight: 600; }
 ```
 
 **Improvement Suggestions**:
+
 1. Make table scrollable horizontally on small screens
 2. Make column headers sticky with `position: sticky; top: 0`
 3. Increase hover state background opacity from 0.02 to 0.05
@@ -261,12 +287,14 @@ h3 { font-size: 20px; font-weight: 600; }
 **Screenshot**: ./analysis/footer-actions.png
 
 **Issues Found**:
+
 - ❌ Buttons too close together (only 8px gap)
 - ❌ Primary button doesn't stand out enough
 - ✅ Fixed positioning works correctly
 - ✅ Z-index prevents content overlap
 
 **CSS Analysis**:
+
 ```css
 /* Current */
 .footer-actions {
@@ -274,7 +302,7 @@ h3 { font-size: 20px; font-weight: 600; }
 }
 
 .btn-primary {
-  background: #3B82F6;
+  background: #3b82f6;
 }
 
 /* Suggested */
@@ -283,12 +311,13 @@ h3 { font-size: 20px; font-weight: 600; }
 }
 
 .btn-primary {
-  background: #2563EB;
+  background: #2563eb;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 ```
 
 **Improvement Suggestions**:
+
 1. Increase button gap from 8px to 16px
 2. Darken primary button color for better contrast
 3. Add subtle box-shadow to primary button
@@ -301,6 +330,7 @@ h3 { font-size: 20px; font-weight: 600; }
 **Minor Issues**: 12
 
 **Priority Fixes** (ordered by impact):
+
 1. Add padding to main content area (mobile usability)
 2. Make table scrollable horizontally (data visibility)
 3. Fix header padding and alignment (visual balance)
@@ -308,6 +338,7 @@ h3 { font-size: 20px; font-weight: 600; }
 5. Improve heading hierarchy (content structure)
 
 **Screenshots Saved**:
+
 - ./analysis/header.png
 - ./analysis/sidebar.png
 - ./analysis/main-content.png
@@ -352,11 +383,13 @@ Verification complete ✓
 ### Verification Strategy
 
 **Quick Checks (1 minute)**:
+
 - Screenshots exist: `ls ./analysis/*.png`
 - Report is complete: `wc -l ./analysis/layout-analysis.md`
 - Spot-check 1-2 CSS suggestions for reasonableness
 
 **Optional Deep Checks**:
+
 - Apply suggested CSS changes to see actual impact
 - Use DevTools to verify current CSS values
 - Test suggested changes in browser
@@ -449,40 +482,48 @@ Verification complete ✓
 ## Common Pitfalls to Avoid
 
 ❌ **Vague Analysis Criteria**
+
 - Bad: "Check if the layout looks good"
 - Good: "Check spacing (padding/margin), alignment, and responsiveness"
 
 ❌ **No Screenshot Organization**
+
 - Bad: Screenshots saved with unclear names
 - Good: Organized directory with descriptive filenames
 
 ❌ **Missing CSS Context**
+
 - Bad: "Make the spacing bigger"
 - Good: "Change `padding: 20px` to `padding: 40px`"
 
 ❌ **Subjective Suggestions**
+
 - Bad: "The color is ugly"
 - Good: "Color contrast ratio is 3.2:1, should be 4.5:1 for WCAG AA"
 
 ## Best Practices
 
 ### Specify Analysis Dimensions
+
 - Spacing (padding, margin, gap)
 - Alignment (flex, grid properties)
 - Responsiveness (breakpoints, container queries)
 - Visual hierarchy (size, weight, color)
 
 ### Request Specific CSS
+
 - Include current CSS values
 - Provide suggested CSS changes
 - Explain the reasoning
 
 ### Make Suggestions Actionable
+
 - Reference specific CSS properties
 - Provide before/after values
 - Include accessibility or usability rationale
 
 ### Organize Screenshots
+
 - Use descriptive filenames
 - Save to organized directory structure
 - Include screenshots in report for context

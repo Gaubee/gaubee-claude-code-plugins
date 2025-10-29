@@ -1,9 +1,11 @@
 # Example: Batch Code Generation
 
 ## Use Case Category
+
 Batch Code Operations
 
 ## Common Tasks
+
 - Generating code files from templates
 - Batch renaming of variables or functions
 - Standardizing code formatting and style
@@ -173,11 +175,13 @@ Verification complete ✓
 ### Verification Strategy
 
 **Quick Checks (1 minute)**:
+
 - File count: `ls ./src/models/*.model.ts | wc -l`
 - Spot-check 2 files: `cat ./src/models/user.model.ts`
 - Type checking: `pnpm tsc --noEmit`
 
 **Optional Deep Checks**:
+
 - Lint all files: `pnpm eslint ./src/models/`
 - Test schema validation: Create simple test file
 
@@ -263,38 +267,46 @@ Verification complete ✓
 ## Common Pitfalls to Avoid
 
 ❌ **Missing Technical Documentation**
+
 - Bad: "Generate Zod schemas" (assumes GLM knows Zod)
 - Good: "Use chrome-devtools-mcp to navigate to https://zod.dev/docs and snapshot the API reference"
 
 ❌ **Incomplete Code Template**
+
 - Bad: Vague description of desired output
 - Good: Complete, runnable code example
 
 ❌ **No Coding Standards**
+
 - Bad: "Generate TypeScript files"
 - Good: "No `any`, strict types, JSDoc on all exports"
 
 ❌ **Weak Verification**
+
 - Bad: "Make sure the code is correct"
 - Good: "Run `pnpm tsc` to verify type safety"
 
 ## Best Practices
 
 ### Provide Complete Templates
+
 Include a full, working example file that GLM can use as a reference.
 
 ### Specify All Conventions
+
 - File naming (kebab-case, PascalCase, etc.)
 - Export naming patterns
 - Import organization
 - Comment styles
 
 ### Include Type Safety Requirements
+
 - Explicitly forbid `any`, `as any`
 - Require strict TypeScript configuration
 - Specify type inference patterns
 
 ### Make Verification Executable
+
 - Provide exact commands to run
 - Specify expected outputs
 - Define pass/fail criteria

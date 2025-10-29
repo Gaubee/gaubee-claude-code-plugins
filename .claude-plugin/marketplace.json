@@ -6,8 +6,8 @@
   },
   "plugins": [
     {
-      "name": "ai-delegation",
-      "source": "./plugins/ai-delegation",
+      "name": "ccai",
+      "source": "./plugins/ccai",
       "description": "Automatically identify tool-intensive tasks with clear boundaries and delegate them to cost-efficient AI providers for execution. Triggers on batch operations (WebFetch, Read, Write, Edit, Bash, MCP, etc.), data processing, code generation, code analysis, and web scraping tasks, chrome-devtools-mcp tasks."
     },
     {

@@ -12,6 +12,7 @@ This skill helps you automatically identify tasks suitable for delegation to cos
 ### 1.1 The Problem
 
 The main Claude session faces rapid context window consumption when performing:
+
 - Batch web scraping (e.g., 50 `WebFetch` calls)
 - Batch file operations (e.g., 100 `Read`/`Write`/`Edit` calls)
 - Large-scale data processing (multiple transformation steps)
@@ -21,6 +22,7 @@ These tasks, while important, quickly bloat the context window.
 ### 1.2 The Solution
 
 Delegate **tool-intensive** but **clearly-defined** tasks to cost-efficient AI providers:
+
 - AI provider executes in isolation, preserving your context
 - You only need simple verification of results (file list, spot-check, statistics)
 - The verification cost is minimal compared to direct execution
@@ -28,12 +30,14 @@ Delegate **tool-intensive** but **clearly-defined** tasks to cost-efficient AI p
 ### 1.3 Core Characteristics of Delegatable Tasks
 
 #### Well-Defined Boundaries
+
 - **Clear Inputs**: Data sources, URLs, file paths explicitly provided
 - **Clear Outputs**: Expected artifacts clearly described
 - **Simple Verification**: Results validated with `ls -lh`, spot-checks, or statistics
 - **Self-Contained Documentation**: All necessary docs provided (URLs, paths, or embedded)
 
 #### Tool-Intensive
+
 - High volume of tool calls (WebFetch, Read, Write, Edit, Glob, Grep, Bash)
 - Would consume significant context if executed directly
 - Delegation keeps main session clean
@@ -41,11 +45,13 @@ Delegate **tool-intensive** but **clearly-defined** tasks to cost-efficient AI p
 ## 2. AI Provider Profile
 
 ### 2.1 Strengths
+
 - **Proficient Tool User**: Multi-step, tool-driven tasks
 - **High-Quality Operations**: Individual operations comparable to Claude Sonnet
 - **Cost-Effective**: Ideal for large volumes of repetitive work
 
 ### 2.2 Limitations
+
 - **Limited Context**: Smaller context window compared to main Claude session
 - **Outdated Knowledge**: You **MUST** provide technical documentation
   - Via URLs (for chrome-devtools-mcp or WebFetch)
@@ -65,6 +71,7 @@ For web scraping, documentation fetching, and visual inspection tasks, **priorit
 3. **Convert**: Transform the snapshot (structured a11y tree) to Markdown or desired format
 
 **Why chrome-devtools-mcp is preferred:**
+
 - ✅ **Real browser environment**: Handles JavaScript-rendered content
 - ✅ **Structured content**: Accessibility tree is easier to parse than raw HTML
 - ✅ **Better error handling**: Proper timeout, navigation, and state management
@@ -72,11 +79,13 @@ For web scraping, documentation fetching, and visual inspection tasks, **priorit
 - ✅ **Interactive testing**: Can click, fill forms, and interact with pages
 
 **When to use WebFetch:**
+
 - ⚠️ **Fallback only**: When chrome-devtools-mcp is unavailable
 - ⚠️ **Simple static pages**: Where JavaScript rendering is not needed
 - ⚠️ **API endpoints**: For fetching raw JSON/XML responses
 
 **Example workflow (chrome-devtools-mcp):**
+
 ```
 1. mcp__chrome-devtools__new_page(url)
 2. mcp__chrome-devtools__take_snapshot() → get a11y tree
@@ -86,6 +95,7 @@ For web scraping, documentation fetching, and visual inspection tasks, **priorit
 ```
 
 **Example workflow (WebFetch fallback):**
+
 ```
 1. WebFetch(url) → get HTML
 2. Parse HTML → extract content
@@ -104,42 +114,48 @@ Cost(Delegation + Verification) < Cost(Direct Execution)
 ### 3.2 Tasks Suitable for Delegation
 
 ✅ **Tool-Intensive**
+
 - Batch operations consuming many tool calls
 - Would bloat context if executed directly
 
 ✅ **Low Verification Cost**
+
 - Simple checks (file lists, spot-checks, statistics)
 - No deep review required
 - Output unlikely to need significant modifications
 
 ✅ **Clear Boundaries**
+
 - Unambiguous inputs, outputs, acceptance criteria
 - All documentation/specs provided upfront
 
 ### 3.3 Tasks Unsuitable for Delegation
 
 ❌ **Output Requires Deep Refinement**
+
 - "Design a microservices architecture" → Iterative discussion needed
 - ✅ Counter-example: "Read 50 architecture docs and summarize" → Only summary quality needs verification
 
 ❌ **High Verification Cost**
+
 - "Refactor a core module" → Detailed code review of every change
 - ✅ Counter-example: "Batch rename variables" → Spot-check 3-5 files
 
 ❌ **Ambiguous Boundaries**
+
 - "Improve project code quality" → No clear standard
 - ✅ Counter-example: "Standardize import order" → Clear, objective rule
 
 ### 3.4 Cost-Benefit Analysis Table
 
-| Task                                  | Main Agent Cost                           | Delegation + Verification Cost  | Decision           |
-| :------------------------------------ | :---------------------------------------- | :------------------------------ | :----------------- |
-| Scrape 50 doc pages to Markdown       | 50 `navigate`+`snapshot`+`Write` calls    | Delegate + `ls -lh` check       | ✅ Delegate        |
-| Read 30 architecture docs & summarize | 30 `navigate`+`snapshot` + summarization  | Delegate + Read summary         | ✅ Delegate        |
-| Batch rename variable in 100 files    | 100 `Read` + `Edit` calls     | Delegate + Spot-check 5 files   | ✅ Delegate        |
-| Find all references to a function     | Multiple `Grep`/`Read` calls  | Delegate + Review list          | ✅ Delegate        |
-| Design a new architecture             | Medium (Reasoning + Output)   | High (Output + Deep review)     | ❌ Do Not Delegate |
-| Refactor a core module                | Medium                        | High (Review every change)      | ❌ Do Not Delegate |
+| Task                                  | Main Agent Cost                          | Delegation + Verification Cost | Decision           |
+| :------------------------------------ | :--------------------------------------- | :----------------------------- | :----------------- |
+| Scrape 50 doc pages to Markdown       | 50 `navigate`+`snapshot`+`Write` calls   | Delegate + `ls -lh` check      | ✅ Delegate        |
+| Read 30 architecture docs & summarize | 30 `navigate`+`snapshot` + summarization | Delegate + Read summary        | ✅ Delegate        |
+| Batch rename variable in 100 files    | 100 `Read` + `Edit` calls                | Delegate + Spot-check 5 files  | ✅ Delegate        |
+| Find all references to a function     | Multiple `Grep`/`Read` calls             | Delegate + Review list         | ✅ Delegate        |
+| Design a new architecture             | Medium (Reasoning + Output)              | High (Output + Deep review)    | ❌ Do Not Delegate |
+| Refactor a core module                | Medium                                   | High (Review every change)     | ❌ Do Not Delegate |
 
 ## 4. Automatic Delegation Workflow
 
@@ -154,6 +170,7 @@ If **all three answers are "yes"**, invoke the appropriate slash command (e.g., 
 ### Step 1: Identify the Task
 
 Recognize patterns like:
+
 - "Scrape all pages from..."
 - "Generate 20 files based on..."
 - "Find all references to..."
@@ -163,6 +180,7 @@ Recognize patterns like:
 ### Step 2: Prepare the Delegation Prompt
 
 Build a complete task description including:
+
 1. **Inputs**: Data sources, file paths, URLs
 2. **Outputs**: Desired result format and location
 3. **Acceptance Criteria**: How to verify completion
@@ -204,6 +222,7 @@ Or:
 ### Step 4: Verify Results
 
 After AI completes:
+
 - **File List**: `ls -lh ./output/`
 - **Spot-Check**: `cat ./output/sample.md | head -20`
 - **Statistics**: Compare counts/sizes to expectations
@@ -214,30 +233,35 @@ If issues found, delegate a follow-up correction task.
 ## 5. Task Categories
 
 ### 5.1 Batch Data Collection
+
 - Web scraping documentation
 - API data aggregation
 - Multi-source content consolidation
 - Resource downloading and organization
 
 ### 5.2 Batch Code Operations
+
 - Code generation from templates
 - Variable/function renaming
 - Code formatting standardization
 - Comment/documentation addition
 
 ### 5.3 Code Analysis
+
 - Function reference finding
 - Complexity/dependency analysis
 - Pattern detection
 - PR/commit impact analysis
 
 ### 5.4 Visual Analysis
+
 - Layout issue analysis
 - CSS style extraction
 - Component screenshots
 - UI state checking
 
 ### 5.5 Documentation Processing
+
 - Batch technical doc reading/summarizing
 - Architecture pattern research
 - Best practice organization
@@ -259,6 +283,7 @@ If issues found, delegate a follow-up correction task.
 ## 7. When to Trigger This Skill
 
 This skill should activate when you observe:
+
 - User requests involving "batch", "all", "multiple", "scrape", "generate"
 - Tasks requiring 10+ tool calls of the same type
 - Data processing workflows with clear inputs/outputs
@@ -266,6 +291,7 @@ This skill should activate when you observe:
 - Documentation research involving multiple sources
 
 **Examples of trigger phrases**:
+
 - "Scrape all documentation from..."
 - "Generate model files for all entities..."
 - "Find all references to..."
@@ -275,6 +301,7 @@ This skill should activate when you observe:
 ## Reference
 
 For detailed examples, see:
+
 - `~/.claude/skills/ai-delegation/examples/web-scraping.md`
 - `~/.claude/skills/ai-delegation/examples/code-generation.md`
 - `~/.claude/skills/ai-delegation/examples/code-analysis.md`

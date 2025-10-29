@@ -1,0 +1,64 @@
+---
+description: {{DESCRIPTION}}
+---
+
+{{PROVIDER_INFO}}
+
+## Context
+
+This command is used when:
+- The task is tool-intensive (many Read/Write/WebFetch/Grep operations)
+- The task has clear boundaries (well-defined inputs/outputs)
+- Verification is simple (file list, spot-check, statistics)
+- Cost(Delegation + Verification) < Cost(Direct Execution)
+
+Refer to `~/.claude/skills/ccai/SKILL.md` for decision criteria.
+
+## Available Task Types
+
+You can enhance the system prompt with task-specific examples:
+
+{{EXAMPLES_LIST}}
+
+## Execution Steps
+
+**Step 1: Prepare Task Prompt**
+
+Write **Task Description($ARGUMENTS)** to `/tmp/ccai-task-{{PROVIDER}}.md`
+
+**Step 2: Execute {{PROVIDER}} via Bash**
+
+Run the following command:
+
+```bash
+# Basic execution (no task type)
+claude --dangerously-skip-permissions \
+  --settings "$(ccai merge-settings {{PROVIDER}})" \
+  --output-format json \
+  --system-prompt "$(ccai merge-prompts --provider {{PROVIDER}})" \
+  -p "$(< /tmp/ccai-task-{{PROVIDER}}.md)"
+
+# With task-specific enhancement (if applicable)
+# Uncomment and modify the task type as needed:
+# claude --dangerously-skip-permissions \
+#   --settings "$(ccai merge-settings {{PROVIDER}})" \
+#   --output-format json \
+#   --system-prompt "$(ccai merge-prompts --example web-scraping --provider {{PROVIDER}})" \
+#   -p "$(< /tmp/ccai-task-{{PROVIDER}}.md)"
+```
+
+**Step 3: Save Task Log**
+
+Save the execution log to:
+`~/.claude/ccai/log/{{PROVIDER}}-$(date +%Y-%m-%d_%H-%M-%S).md`
+
+**Step 4: Return Results**
+
+The {{PROVIDER}} output will be displayed. Your job is to:
+1. Review the output
+2. Perform quick verification (as described in the output)
+3. Report completion status to the user
+
+## Task Description($ARGUMENTS)
+
+$ARGUMENTS

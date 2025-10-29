@@ -1,13 +1,60 @@
 {
   "name": "ccai",
-  "version": "0.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "version": "0.1.0",
+  "description": "Claude Code AI Assistant - Intelligent AI provider management and routing tool",
+  "type": "module",
+  "bin": {
+    "ccai": "./dist/index.js"
   },
-  "keywords": [],
+  "files": [
+    "dist",
+    "README.md",
+    "README-zh.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "generate:templates": "tsx scripts/generate-templates.ts",
+    "prebuild": "pnpm generate:templates",
+    "build": "rolldown -c rolldown.config.ts",
+    "dev": "pnpm generate:templates && tsx src/index.ts",
+    "ccai": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "keywords": [
+    "claude-code",
+    "ai",
+    "llm",
+    "cli",
+    "developer-tools"
+  ],
   "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.18.1"
+  "license": "MIT",
+  "packageManager": "pnpm@10.18.1",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "lodash": "^4.17.21",
+    "picocolors": "^1.1.1",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.14",
+    "@types/node": "^22.10.5",
+    "@vitest/coverage-v8": "^3.2.4",
+    "oxlint": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-organize-imports": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:",
+    "rolldown": "^1.0.0-beta.45",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.4"
+  }
 }

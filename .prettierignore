@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+pnpm-lock.yaml
+
+# Build output
+dist
+build
+.rolldown
+
+# Coverage
+coverage
+.nyc_output
+
+# Environment
+.env
+.env.*
+
+# Git
+.git
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+
+# Generated files
+*.generated.*
+templates/**/*.md.template

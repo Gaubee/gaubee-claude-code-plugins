@@ -1,1 +1,26 @@
+# macOS
 .DS_Store
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Generated files
+src/generated/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+.cache/

@@ -1,0 +1,13 @@
+{
+  "ccai": {
+    "name": "Provider Name",
+    "description": "Provider description and capabilities.\n\n**Strengths**:\n- Feature 1\n- Feature 2\n\n**Use Cases**:\n- Use case 1\n- Use case 2",
+    "systemPrompt": "## Provider-Specific Instructions\n\nYou are using {{PROVIDER}} model. Please follow these guidelines:\n\n1. Leverage the model's strengths\n2. Be aware of limitations\n3. Optimize for cost and performance",
+    "disabled": false
+  },
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "your-api-key-here",
+    "ANTHROPIC_BASE_URL": "https://api.provider.com/v1/",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  }
+}

@@ -1,9 +1,11 @@
 # Example: Function Reference Analysis
 
 ## Use Case Category
+
 Code Analysis and Statistics
 
 ## Common Tasks
+
 - Finding all references to functions or variables
 - Analyzing code complexity and dependencies
 - Detecting code patterns and potential issues
@@ -88,10 +90,11 @@ Generate a structured analysis report:
 
 ### GLM-4.6 Report Output
 
-```markdown
+````markdown
 # calculateTotal Function Reference Analysis
 
 ## Summary Statistics
+
 - Total references: 47 times
 - Files involved: 12 files
 - Reference type distribution:
@@ -103,14 +106,17 @@ Generate a structured analysis report:
 ## Detailed Reference List
 
 ### File: src/components/Cart.tsx
+
 - **Line 12**: Import statement
   ```typescript
-  import { calculateTotal } from '@/utils/pricing'
+  import { calculateTotal } from "@/utils/pricing";
   ```
+````
 
 - **Line 45**: Function call
+
   ```typescript
-  const total = calculateTotal(items)
+  const total = calculateTotal(items);
   ```
 
 - **Line 67**: Function passing
@@ -119,27 +125,32 @@ Generate a structured analysis report:
   ```
 
 ### File: src/components/Checkout.tsx
+
 - **Line 8**: Import statement
+
   ```typescript
-  import { calculateTotal } from '@/utils/pricing'
+  import { calculateTotal } from "@/utils/pricing";
   ```
 
 - **Line 23**: Function call
   ```typescript
-  const subtotal = calculateTotal(selectedItems)
+  const subtotal = calculateTotal(selectedItems);
   ```
 
 ... (10 more files)
 
 ## Definition Location
+
 File: src/utils/pricing.ts
 Line: 145-160
 
 ## Notes
+
 - Most references are direct function calls
 - No deprecated usage patterns found
 - All imports use named import syntax
-```
+
+````
 
 ### Main Claude Verification
 
@@ -150,7 +161,7 @@ grep -n "calculateTotal" src/utils/pricing.ts
 
 # Verify statistics
 grep -r "calculateTotal" src/ --include="*.ts" --include="*.tsx" | wc -l
-```
+````
 
 Verification complete ✓
 
@@ -176,11 +187,13 @@ Verification complete ✓
 ### Verification Strategy
 
 **Quick Checks (30 seconds)**:
+
 - Total count: `grep -r "calculateTotal" src/ | wc -l`
 - Spot-check 2-3 files: `grep -n "calculateTotal" [file]`
 - Verify categories make sense
 
 **Optional Deep Checks**:
+
 - Use AST parser to verify classification accuracy
 - Check for missed edge cases (dynamic calls, etc.)
 
@@ -305,39 +318,47 @@ Verification complete ✓
 ## Common Pitfalls to Avoid
 
 ❌ **Vague Search Scope**
+
 - Bad: "Find references in the project"
 - Good: "Search all .ts and .tsx files in ./src/"
 
 ❌ **No Categorization**
+
 - Bad: "List all references"
 - Good: "Categorize by: calls, imports, type refs, etc."
 
 ❌ **Missing Context**
+
 - Bad: Just line numbers
 - Good: Line numbers + surrounding code snippet
 
 ❌ **No Definition Exclusion**
+
 - Bad: Counting the definition as a reference
 - Good: "Exclude the definition location"
 
 ## Best Practices
 
 ### Provide Clear Search Patterns
+
 - Specify file extensions
 - Define directory scope
 - List exclusion patterns if any
 
 ### Define Reference Categories
+
 - What counts as a "reference"?
 - How to classify different usage types
 - How to handle edge cases
 
 ### Request Structured Output
+
 - Use Markdown tables for statistics
 - Include code snippets for context
 - Provide file paths with line numbers
 
 ### Make Verification Easy
+
 - Provide grep commands for spot-checking
 - Suggest statistical comparisons
 - Include representative samples in report

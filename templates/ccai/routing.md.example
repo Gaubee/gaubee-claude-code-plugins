@@ -1,0 +1,54 @@
+# AI Provider Routing Strategy
+
+## Routing Principles
+
+When selecting an AI Provider, follow these priorities:
+
+1. **Cost Priority**: Prefer cost-effective providers
+2. **Task Matching**: Choose providers that excel in specific task types
+3. **Load Balancing**: Avoid overloading a single provider
+
+## Task Type Matching Rules
+
+### Web Scraping Tasks
+- **Primary**: Provider with strong tool-calling capabilities
+- **Fallback**: Any available provider
+- **Max Cost**: $0.10
+
+### Code Generation Tasks
+- **Primary**: Providers with code expertise
+- **Evaluation Criteria**: Code quality > Speed
+- **Avoid**: None
+
+### Data Processing Tasks
+- **Primary**: Cost-efficient providers for batch processing
+- **Max Cost**: $0.05
+
+### Documentation Research Tasks
+- **Primary**: Any available provider
+- **Evaluation Criteria**: Speed > Cost
+
+## Provider Capabilities
+
+### Example Provider
+- **Strengths**: Tool calling, cost efficiency, batch processing
+- **Limitations**: Context window 200K
+- **Best For**: Web scraping, Batch processing, Code generation
+
+## Special Rules
+
+- If task explicitly mentions performance requirements, prioritize speed over cost
+- If task is estimated to consume > 100K tokens, must choose the most cost-effective provider
+- User can force provider selection with `--prefer-provider=<name>` parameter
+
+---
+
+## Routing Strategy Evaluation History
+
+> **Last Evaluation**: Never
+> **Next Recommended Evaluation**: After 5+ tasks
+> **Evaluation Command**: `/ccaieval`
+
+**Evaluation Notes**:
+- If more than **7 days** have passed since last evaluation, consider running `/ccaieval` to update routing strategy
+- After running `/ccaieval`, **restart Claude Code** to reload the updated `routing.md`

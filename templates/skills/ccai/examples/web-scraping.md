@@ -1,9 +1,11 @@
 # Example: Website Documentation Scraping
 
 ## Use Case Category
+
 Batch Data Collection and Transformation
 
 ## Common Tasks
+
 - Batch scraping website documentation and converting formats
 - Collecting and aggregating data from APIs
 - Fetching and consolidating content from multiple sources
@@ -117,11 +119,13 @@ Verification complete ✓
 ### Verification Strategy
 
 **Quick Checks (30 seconds)**:
+
 - File count: `ls ./crawled-docs/*.md | wc -l`
 - File sizes: `ls -lh ./crawled-docs/*.md`
 - Sample content: `head -20 ./crawled-docs/getting-started.md`
 
 **Optional Deep Checks**:
+
 - Validate Markdown syntax: `mdl ./crawled-docs/`
 - Check for broken links: `markdown-link-check ./crawled-docs/*.md`
 
@@ -171,17 +175,21 @@ Verification complete ✓
 ## Common Pitfalls to Avoid
 
 ❌ **Vague Acceptance Criteria**
+
 - Bad: "Make sure the files are good quality"
 - Good: "Verify code blocks are preserved with syntax highlighting"
 
 ❌ **Missing Error Handling**
+
 - Bad: No mention of failures
 - Good: "Skip 404 pages and log them in the error report"
 
 ❌ **Ambiguous Output Format**
+
 - Bad: "Save the content somewhere"
 - Good: "Save to ./crawled-docs/ with slugified filenames"
 
 ❌ **No Verification Strategy**
+
 - Bad: Expecting GLM to self-verify
 - Good: "Provide file list for main agent to spot-check"
