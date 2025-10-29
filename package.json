@@ -39,6 +39,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.18.1",
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "catalog:",
     "commander": "^12.1.0",
     "lodash": "catalog:",
     "picocolors": "^1.1.1",

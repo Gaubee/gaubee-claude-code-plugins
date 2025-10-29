@@ -3,15 +3,16 @@ import { logger } from "./logger.js";
 
 /**
  * Default format template for Claude output
+ * Shows key information in a concise format
  */
 export const DEFAULT_FORMAT_TEMPLATE = `
 Status: {{status}} ({{subtype}})
-Session ID: {{session_id}}
+{{#if session_id}}Session ID: {{session_id}}{{/if}}
 Error: {{is_error}}
-Turns: {{num_turns}}
-Duration: {{duration_s}}s (API: {{duration_api_s}}s)
-Cost: ${{total_cost_usd}}
-Tokens: {{input_tokens}} in / {{output_tokens}} out
+{{#if num_turns}}Turns: {{num_turns}}{{/if}}
+{{#if duration_s}}Duration: {{duration_s}}s{{/if}}{{#if duration_api_s}} (API: {{duration_api_s}}s){{/if}}
+{{#if total_cost_usd}}Cost: ${{total_cost_usd}}{{/if}}
+{{#if input_tokens}}Tokens: {{input_tokens}} in / {{output_tokens}} out{{/if}}
 {{#if cache_read_tokens}}Cache Read: {{cache_read_tokens}}{{/if}}
 {{#if result}}
 Result:
@@ -62,47 +63,59 @@ export function renderTemplate(template: string, data: Record<string, unknown>):
 }
 
 /**
- * Prepare data object for template rendering
+ * Safely get a value with fallback
  */
-export function prepareTemplateData(output: ClaudeOutput): Record<string, unknown> {
+function safeGet<T>(value: T | undefined | null, fallback: T): T {
+  return value ?? fallback;
+}
+
+/**
+ * Prepare data object for template rendering
+ * Tolerant of missing fields - returns empty string for missing values
+ */
+export function prepareTemplateData(output: Partial<ClaudeOutput>): Record<string, unknown> {
+  const durationMs = safeGet(output.duration_ms, 0);
+  const durationApiMs = safeGet(output.duration_api_ms, 0);
+
   return {
     // Basic info
-    type: output.type,
-    subtype: output.subtype,
+    type: output.type || "",
+    subtype: output.subtype || "unknown",
     is_error: output.is_error ? "true" : "false",
     status: output.is_error ? "❌ Failed" : "✅ Success",
     session_id: output.session_id || "",
     uuid: output.uuid || "",
 
     // Timing
-    duration_ms: output.duration_ms,
-    duration_api_ms: output.duration_api_ms,
-    duration_s: formatHelpers.duration_s(output.duration_ms),
-    duration_api_s: formatHelpers.duration_api_s(output.duration_api_ms),
+    duration_ms: durationMs || "",
+    duration_api_ms: durationApiMs || "",
+    duration_s: durationMs ? formatHelpers.duration_s(durationMs) : "",
+    duration_api_s: durationApiMs ? formatHelpers.duration_api_s(durationApiMs) : "",
 
     // Turns and cost
-    num_turns: output.num_turns,
-    total_cost_usd: output.total_cost_usd?.toFixed(6) || "0.000000",
+    num_turns: output.num_turns ?? "",
+    total_cost_usd: output.total_cost_usd !== undefined ? output.total_cost_usd.toFixed(6) : "",
 
     // Token usage
-    input_tokens: output.usage?.input_tokens || 0,
-    output_tokens: output.usage?.output_tokens || 0,
-    cache_read_tokens: output.usage?.cache_read_input_tokens || 0,
-    cache_creation_tokens: output.usage?.cache_creation_input_tokens || 0,
-    web_search_requests: output.usage?.server_tool_use?.web_search_requests || 0,
+    input_tokens: output.usage?.input_tokens ?? "",
+    output_tokens: output.usage?.output_tokens ?? "",
+    cache_read_tokens: output.usage?.cache_read_input_tokens ?? "",
+    cache_creation_tokens: output.usage?.cache_creation_input_tokens ?? "",
+    web_search_requests: output.usage?.server_tool_use?.web_search_requests ?? "",
 
     // Result
     result: output.result || "",
 
     // Permission denials
-    permission_denials_count: output.permission_denials?.length || 0,
+    permission_denials_count: output.permission_denials?.length ?? "",
   };
 }
 
 /**
  * Format Claude output using a template
+ * Tolerant of missing fields - will not error on missing data
  */
-export function formatWithTemplate(output: ClaudeOutput, template?: string): void {
+export function formatWithTemplate(output: Partial<ClaudeOutput>, template?: string): void {
   const templateStr = template || DEFAULT_FORMAT_TEMPLATE;
   const data = prepareTemplateData(output);
 

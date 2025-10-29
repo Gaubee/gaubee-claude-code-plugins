@@ -1,60 +1,34 @@
+import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { inspect } from "node:util";
 import { logger } from "./logger.js";
 
 /**
  * Claude CLI JSON output structure
+ * Using SDKMessage from @anthropic-ai/claude-agent-sdk
  */
-export interface ClaudeOutput {
-  type: string;
-  subtype: string;
-  is_error: boolean;
-  duration_ms: number;
-  duration_api_ms: number;
-  num_turns: number;
-  result: string;
-  session_id: string;
-  total_cost_usd: number;
-  usage?: {
-    input_tokens: number;
-    cache_creation_input_tokens: number;
-    cache_read_input_tokens: number;
-    output_tokens: number;
-    server_tool_use?: {
-      web_search_requests: number;
-    };
-    service_tier?: string;
-    cache_creation?: {
-      ephemeral_1h_input_tokens: number;
-      ephemeral_5m_input_tokens: number;
-    };
-  };
-  modelUsage?: Record<
-    string,
-    {
-      inputTokens: number;
-      outputTokens: number;
-      cacheReadInputTokens: number;
-      cacheCreationInputTokens: number;
-      webSearchRequests: number;
-      costUSD: number;
-      contextWindow: number;
-    }
-  >;
-  permission_denials?: Array<unknown>;
-  uuid?: string;
+export type ClaudeOutput = SDKMessage;
+
+/**
+ * Safely get a value with fallback
+ */
+function safeGet<T>(value: T | undefined | null, fallback: T): T {
+  return value ?? fallback;
 }
 
 /**
  * Format Claude output in a pretty, human-readable way
+ * Tolerant of missing fields
  */
-export function formatClaudeOutput(output: ClaudeOutput): void {
+export function formatClaudeOutput(output: Partial<ClaudeOutput>): void {
   // Header
   logger.section("Execution Summary");
 
   // Status
-  const statusIcon = output.is_error ? "❌" : "✅";
-  const statusText = output.is_error ? "Failed" : "Success";
-  console.log(`${statusIcon} Status: ${statusText} (${output.subtype})`);
+  const isError = safeGet(output.is_error, false);
+  const statusIcon = isError ? "❌" : "✅";
+  const statusText = isError ? "Failed" : "Success";
+  const subtype = safeGet(output.subtype, "unknown");
+  console.log(`${statusIcon} Status: ${statusText} (${subtype})`);
 
   // Session ID
   if (output.session_id) {
@@ -62,40 +36,46 @@ export function formatClaudeOutput(output: ClaudeOutput): void {
   }
 
   // Timing
-  console.log(
-    `⏱️  Duration: ${(output.duration_ms / 1000).toFixed(2)}s (API: ${(output.duration_api_ms / 1000).toFixed(2)}s)`
-  );
+  const durationMs = safeGet(output.duration_ms, 0);
+  const durationApiMs = safeGet(output.duration_api_ms, 0);
+  if (durationMs > 0 || durationApiMs > 0) {
+    console.log(
+      `⏱️  Duration: ${(durationMs / 1000).toFixed(2)}s (API: ${(durationApiMs / 1000).toFixed(2)}s)`
+    );
+  }
 
   // Turns
-  console.log(`🔄 Turns: ${output.num_turns}`);
+  const numTurns = safeGet(output.num_turns, 0);
+  if (numTurns > 0) {
+    console.log(`🔄 Turns: ${numTurns}`);
+  }
 
   // Cost
-  if (output.total_cost_usd !== undefined) {
+  if (output.total_cost_usd !== undefined && output.total_cost_usd !== null) {
     console.log(`💰 Cost: $${output.total_cost_usd.toFixed(6)}`);
   }
 
   // Token usage
   if (output.usage) {
     logger.section("Token Usage");
-    console.log(`📥 Input: ${output.usage.input_tokens.toLocaleString()}`);
-    console.log(`📤 Output: ${output.usage.output_tokens.toLocaleString()}`);
+    const inputTokens = safeGet(output.usage.input_tokens, 0);
+    const outputTokens = safeGet(output.usage.output_tokens, 0);
+    console.log(`📥 Input: ${inputTokens.toLocaleString()}`);
+    console.log(`📤 Output: ${outputTokens.toLocaleString()}`);
 
-    if (output.usage.cache_read_input_tokens > 0) {
-      console.log(
-        `💾 Cache Read: ${output.usage.cache_read_input_tokens.toLocaleString()}`
-      );
+    const cacheRead = safeGet(output.usage.cache_read_input_tokens, 0);
+    if (cacheRead > 0) {
+      console.log(`💾 Cache Read: ${cacheRead.toLocaleString()}`);
     }
 
-    if (output.usage.cache_creation_input_tokens > 0) {
-      console.log(
-        `💾 Cache Creation: ${output.usage.cache_creation_input_tokens.toLocaleString()}`
-      );
+    const cacheCreation = safeGet(output.usage.cache_creation_input_tokens, 0);
+    if (cacheCreation > 0) {
+      console.log(`💾 Cache Creation: ${cacheCreation.toLocaleString()}`);
     }
 
-    if (output.usage.server_tool_use?.web_search_requests) {
-      console.log(
-        `🔍 Web Searches: ${output.usage.server_tool_use.web_search_requests}`
-      );
+    const webSearches = output.usage.server_tool_use?.web_search_requests;
+    if (webSearches && webSearches > 0) {
+      console.log(`🔍 Web Searches: ${webSearches}`);
     }
   }
 
@@ -104,16 +84,26 @@ export function formatClaudeOutput(output: ClaudeOutput): void {
     logger.section("Model Usage");
     for (const [model, usage] of Object.entries(output.modelUsage)) {
       console.log(`\n📊 ${logger.provider(model)}`);
-      console.log(`   Input: ${usage.inputTokens.toLocaleString()}`);
-      console.log(`   Output: ${usage.outputTokens.toLocaleString()}`);
-      if (usage.cacheReadInputTokens > 0) {
-        console.log(`   Cache Read: ${usage.cacheReadInputTokens.toLocaleString()}`);
+      console.log(`   Input: ${safeGet(usage.inputTokens, 0).toLocaleString()}`);
+      console.log(`   Output: ${safeGet(usage.outputTokens, 0).toLocaleString()}`);
+
+      const cacheRead = safeGet(usage.cacheReadInputTokens, 0);
+      if (cacheRead > 0) {
+        console.log(`   Cache Read: ${cacheRead.toLocaleString()}`);
       }
-      if (usage.webSearchRequests > 0) {
-        console.log(`   Web Searches: ${usage.webSearchRequests}`);
+
+      const webSearches = safeGet(usage.webSearchRequests, 0);
+      if (webSearches > 0) {
+        console.log(`   Web Searches: ${webSearches}`);
       }
-      console.log(`   Cost: $${usage.costUSD.toFixed(6)}`);
-      console.log(`   Context Window: ${usage.contextWindow.toLocaleString()}`);
+
+      const cost = safeGet(usage.costUSD, 0);
+      console.log(`   Cost: $${cost.toFixed(6)}`);
+
+      const contextWindow = safeGet(usage.contextWindow, 0);
+      if (contextWindow > 0) {
+        console.log(`   Context Window: ${contextWindow.toLocaleString()}`);
+      }
     }
   }
 
