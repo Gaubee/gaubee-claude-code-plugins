@@ -156,7 +156,7 @@ describe("merger", () => {
 
   describe("lodash merge behavior", () => {
     it("should perform deep merge correctly", async () => {
-      const { mergeWith, isArray } = await import("lodash");
+      const { mergeWith, isArray } = await import("lodash-es");
 
       const defaultSettings = {
         model: "claude-3",
@@ -196,7 +196,7 @@ describe("merger", () => {
     });
 
     it("should not concatenate arrays", async () => {
-      const { mergeWith, isArray } = await import("lodash");
+      const { mergeWith, isArray } = await import("lodash-es");
 
       const obj1 = { arr: [1, 2] };
       const obj2 = { arr: [3, 4] };

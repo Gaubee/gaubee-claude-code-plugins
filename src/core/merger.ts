@@ -12,7 +12,7 @@ import {
   writeJsonFile,
 } from "@/utils/fs.js";
 import { logger } from "@/utils/logger";
-import { isArray, mergeWith } from "lodash";
+import { isArray, mergeWith } from "lodash-es";
 import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

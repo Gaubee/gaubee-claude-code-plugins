@@ -1,7 +1,0 @@
-catalog:
-  '@anthropic-ai/claude-agent-sdk': 'catalog:'
-  lodash: npm:lodash-es@^4.17.21
-  oxlint: ^1.24.0
-  prettier: ^3.6.2
-  prettier-plugin-organize-imports: ^4.3.0
-  prettier-plugin-tailwindcss: ^0.7.1

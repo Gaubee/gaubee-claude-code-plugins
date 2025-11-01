@@ -19,7 +19,8 @@
 ## 安装
 
 ```bash
-npx ccai init
+npm i -g ccai
+ccai init
 ```
 
 这将把 CCAI 模板安装到您的 `~/.claude` 目录。

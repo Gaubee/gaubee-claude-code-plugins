@@ -19,7 +19,8 @@ English | [中文](./README-zh.md)
 ## Installation
 
 ```bash
-npx ccai init
+npm i -g ccai
+ccai init
 ```
 
 This will install CCAI templates to your `~/.claude` directory.
