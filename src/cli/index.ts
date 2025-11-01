@@ -1,7 +1,5 @@
 import { Command } from "commander";
-import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import packageJson from "../../package.json";
 import { createAddCommand } from "./commands/add.command.js";
 import { createDisableCommand } from "./commands/disable.command.js";
 import { createEnableCommand } from "./commands/enable.command.js";
@@ -13,13 +11,8 @@ import { createMergeSettingsCommand } from "./commands/merge-settings.command.js
 import { createRunCommand } from "./commands/run.command.js";
 import { createUpdateCommand } from "./commands/update.command.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 async function getVersion(): Promise<string> {
   try {
-    const packagePath = join(__dirname, "../../package.json");
-    const packageJson = JSON.parse(await readFile(packagePath, "utf-8"));
     return packageJson.version || "0.0.0";
   } catch {
     return "0.0.0";
