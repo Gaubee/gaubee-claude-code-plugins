@@ -11,21 +11,28 @@ export function createRunCommand(): Command {
     .option("--example <type>", "Task type example to enhance prompt")
     .option("--session-id <uuid>", "Continue from a previous session")
     .option("--plan-only", "Generate execution plan only (for intelligent routing)")
-    .option("--log", "Enable detailed logging with stream-json output format (auto-enables verbose)")
+    .option(
+      "--log",
+      "Enable detailed logging with stream-json output format (auto-enables verbose)"
+    )
     .option("--pretty-json", "Format JSON output in a human-readable way")
     .option("--format [template]", "Format output using template (default shows key info)")
     .option("--prompt-file <path>", "Read prompt from file instead of arguments")
-    .argument("[prompt...]", "Task prompt (can be multiple arguments, or enter REPL mode if omitted)")
+    .option("--print-command [format]", "Print the final claude command without executing it (text|json|bash|ps)")
+    .argument(
+      "[prompt...]",
+      "Task prompt (can be multiple arguments, or enter REPL mode if omitted)"
+    )
     .action(async (promptArgs: string[], options) => {
       try {
         // Validate provider
         if (!options.provider) {
           logger.error("Provider is required");
-          logger.info("Usage: npx ccai run --provider <provider> [prompt]");
+          logger.info("Usage:  --provider <provider> [prompt]");
           logger.info("Examples:");
           logger.list([
-            "npx ccai run --provider glm 'analyze this code'",
-            "npx ccai run --provider glm  # Enter REPL mode",
+            " --provider glm 'analyze this code'",
+            " --provider glm  # Enter REPL mode",
           ]);
           process.exit(1);
         }
@@ -59,8 +66,8 @@ export function createRunCommand(): Command {
           // Combine prompt arguments
           prompt = promptArgs.join(" ").trim();
 
-          // If no prompt provided, enter REPL mode
-          if (!prompt) {
+          // If no prompt provided, enter REPL mode (unless in print-command mode)
+          if (!prompt && !options.printCommand) {
             prompt = await startREPL();
           }
         }
@@ -73,6 +80,7 @@ export function createRunCommand(): Command {
           log: options.log,
           prettyJson: options.prettyJson,
           format: options.format,
+          printCommand: options.printCommand,
         });
       } catch (error) {
         logger.error(

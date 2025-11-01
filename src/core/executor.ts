@@ -7,6 +7,75 @@ import { join } from "node:path";
 import { mergeSettings, mergeSystemPrompts } from "./merger.js";
 
 /**
+ * Get default print command format based on OS
+ */
+function getDefaultPrintFormat(): "bash" | "ps" {
+  return process.platform === "win32" ? "ps" : "bash";
+}
+
+/**
+ * Print the claude command that would be executed
+ */
+async function printClaudeCommand(
+  args: string[],
+  format: "text" | "json" | "bash" | "ps" | boolean = true,
+  systemPrompt?: string
+): Promise<void> {
+  // Normalize format parameter - use OS-based default for boolean
+  const outputFormat = typeof format === "boolean" ? getDefaultPrintFormat() : format;
+
+  // Replace placeholder with appropriate content based on format
+  const newArgs = await Promise.all(
+    args.map(async (arg) => {
+      if (arg === "{{CCAI_SYSTEM_PROMPT}}") {
+        if (outputFormat === "json") {
+          return systemPrompt || "";
+        } else if (outputFormat === "bash" || outputFormat === "ps") {
+          // For bash/ps, write system prompt to a temp file and use substitution
+          const { writeFile } = await import("node:fs/promises");
+          const { tmpdir } = await import("node:os");
+          const { join } = await import("node:path");
+
+          const tempFile = join(tmpdir(), `ccai-prompt-${Date.now()}.md`);
+          await writeFile(tempFile, systemPrompt || "", "utf-8");
+
+          if (outputFormat === "bash") {
+            return `$(< "${tempFile}")`;
+          } else if (outputFormat === "ps") {
+            return `$(Get-Content "${tempFile}" -Raw)`;
+          }
+        } else {
+          // Text format - properly escaped for shell scripts
+          if (!systemPrompt) return "''";
+          return `'${systemPrompt.replace(/'/g, "'\\''")}'`;
+        }
+      }
+      return arg;
+    })
+  );
+
+  if (outputFormat === "json") {
+    // Output as JSON array for easier testing and parsing
+    console.log(JSON.stringify(["claude", ...newArgs]));
+  } else {
+    // For bash/ps/text, escape arguments properly
+    const escapeForShell = (arg: string): string => {
+      // If it's the system prompt substitution, don't escape it
+      if (arg.startsWith("$(")) return arg;
+
+      // Handle normal arguments
+      if (arg.includes(" ") || arg.includes("\n") || arg.includes('"') || arg.includes("'")) {
+        return `'${arg.replace(/'/g, "'\\''")}'`;
+      }
+      return arg;
+    };
+
+    const commandParts = ["claude", ...newArgs.map(escapeForShell)];
+    console.log(commandParts.join(" "));
+  }
+}
+
+/**
  * Execute AI provider with a task
  */
 export async function executeAI(
@@ -14,11 +83,18 @@ export async function executeAI(
   task: string,
   options: ExecuteOptions = {}
 ): Promise<void> {
-  logger.info(`Executing task with provider: ${logger.provider(provider)}`);
+  // Disable logger output in print-command mode
+  const isPrintMode = !!options.printCommand;
+
+  if (!isPrintMode) {
+    logger.info(`Executing task with provider: ${logger.provider(provider)}`);
+  }
 
   // 1. Merge settings
   const settingsPath = await mergeSettings(provider);
-  logger.info(`Settings merged: ${logger.path(settingsPath)}`);
+  if (!isPrintMode) {
+    logger.info(`Settings merged: ${logger.path(settingsPath)}`);
+  }
 
   // 2. Merge system prompts
   const systemPrompt = await mergeSystemPrompts({
@@ -33,7 +109,9 @@ export async function executeAI(
   if (useFile) {
     promptPath = join(tmpdir(), `ccai-prompt-${provider}-${Date.now()}.md`);
     await writeFile(promptPath, systemPrompt, "utf-8");
-    logger.info(`System prompt saved to temp file (${systemPrompt.length} bytes)`);
+    if (!isPrintMode) {
+      logger.info(`System prompt saved to temp file (${systemPrompt.length} bytes)`);
+    }
   }
 
   // 4. Prepare execution arguments
@@ -44,7 +122,9 @@ export async function executeAI(
   if (options.log) {
     args.push("--output-format", "stream-json");
     args.push("--verbose"); // Required for stream-json with --print
-    logger.info("Using stream-json output format with verbose mode");
+    if (!isPrintMode) {
+      logger.info("Using stream-json output format with verbose mode");
+    }
   } else {
     args.push("--output-format", "json");
   }
@@ -52,22 +132,37 @@ export async function executeAI(
   // Add session ID if provided (for continuing context)
   if (options.sessionId) {
     args.push("--resume", options.sessionId);
-    logger.info(`Continuing session: ${options.sessionId}`);
+    if (!isPrintMode) {
+      logger.info(`Continuing session: ${options.sessionId}`);
+    }
   }
 
-  // Add system prompt
+  // Add system prompt - use placeholder for late injection
   if (useFile && promptPath) {
     // Note: Assuming claude CLI supports --system-prompt-file
     // If not available, we'll use --system-prompt with the content
-    args.push("--system-prompt", systemPrompt);
+    args.push("--system-prompt", "{{CCAI_SYSTEM_PROMPT}}");
   } else {
-    args.push("--system-prompt", systemPrompt);
+    args.push("--system-prompt", "{{CCAI_SYSTEM_PROMPT}}");
   }
 
-  // Add task
-  args.push("-p", task);
+  // Add task (only if task is not empty)
+  if (task) {
+    args.push("-p", task);
+  }
 
-  // 5. Execute Claude
+  // 5. If print-command mode, print and return
+  if (options.printCommand) {
+    await printClaudeCommand(args, options.printCommand, systemPrompt);
+    return;
+  }
+
+  // 6. Replace placeholder with actual system prompt for execution
+  const finalArgs = args.map(arg =>
+    arg === "{{CCAI_SYSTEM_PROMPT}}" ? systemPrompt : arg
+  );
+
+  // 7. Execute Claude
   logger.info("Starting Claude execution...");
   try {
     // Determine output handling mode
@@ -76,7 +171,7 @@ export async function executeAI(
       const { formatMessageWithTemplate } = await import("@/utils/template-formatter.js");
 
       await new Promise<void>((resolve, reject) => {
-        const child = spawn("claude", args, {
+        const child = spawn("claude", finalArgs, {
           stdio: ["ignore", "pipe", "pipe"],
           shell: false,
         });
@@ -134,7 +229,7 @@ export async function executeAI(
       const { prettyPrintJson } = await import("@/utils/json-formatter.js");
 
       await new Promise<void>((resolve, reject) => {
-        const child = spawn("claude", args, {
+        const child = spawn("claude", finalArgs, {
           stdio: ["ignore", "pipe", "pipe"],
           shell: false,
         });
@@ -188,7 +283,7 @@ export async function executeAI(
     } else {
       // Standard execution with inherited stdio
       await new Promise<void>((resolve, reject) => {
-        const child = spawn("claude", args, {
+        const child = spawn("claude", finalArgs, {
           stdio: "inherit",
           shell: false,
         });

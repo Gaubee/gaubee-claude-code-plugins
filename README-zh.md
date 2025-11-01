@@ -100,6 +100,115 @@ npx ccai enable glm
 
 - `npx ccai merge-settings <provider>` - 合并提供商设置
 - `npx ccai merge-prompts --provider <name>` - 合并系统提示词
+- `npx ccai run --provider <name> [prompt]` - 使用特定提供商执行任务
+
+## Run 命令
+
+`run` 命令提供与 AI 提供商的直接任务执行,对测试和调试非常有用。
+
+### 基本用法
+
+```bash
+# 直接执行任务
+npx ccai run --provider glm "分析这段代码"
+
+# 从文件读取提示词
+npx ccai run --provider glm --prompt-file ./prompt.txt
+
+# 继续之前的会话
+npx ccai run --provider glm "继续" --session-id <uuid>
+```
+
+### 打印命令模式
+
+`--print-command` 选项会打印最终的 Claude 命令而不执行它,对调试或理解执行流程非常有用。
+
+**输出格式:**
+
+- `bash` (macOS/Linux 默认) - 使用 bash 文件替换 `$(< "file")`
+- `ps` (Windows 默认) - 使用 PowerShell 语法 `$(Get-Content "file" -Raw)`
+- `json` - 输出 JSON 数组格式,便于程序化使用
+- `text` - 输出原始转义的命令字符串
+
+**示例:**
+
+```bash
+# 打印适合当前操作系统的命令格式
+npx ccai run --provider glm "分析代码" --print-command
+
+# macOS/Linux 输出:
+# claude --settings /path/to/settings.json --system-prompt $(< "/tmp/prompt.md") -p '分析代码'
+
+# 强制使用 bash 格式
+npx ccai run --provider glm "分析代码" --print-command=bash
+
+# PowerShell 格式
+npx ccai run --provider glm "分析代码" --print-command=ps
+
+# JSON 格式(用于脚本)
+npx ccai run --provider glm "分析代码" --print-command=json
+# ["claude","--settings","/path/to/settings.json","--system-prompt","..."]
+
+# 打印不带提示词的命令结构
+npx ccai run --provider glm --print-command
+# (没有提供提示词时会省略 -p 参数)
+```
+
+### 高级选项
+
+```bash
+# 任务类型提示以优化提示词
+npx ccai run --provider glm "抓取网站" --example web-scraping
+
+# 启用详细日志
+npx ccai run --provider glm "处理数据" --log
+
+# 美化 JSON 输出
+npx ccai run --provider glm "生成报告" --pretty-json
+
+# 自定义输出格式
+npx ccai run --provider glm "分析" --format "{{role}}: {{content}}"
+```
+
+### 选项参考
+
+| 选项 | 类型 | 描述 |
+|------|------|------|
+| `--provider` | string | **必需。** 提供商名称(如 glm, minimax) |
+| `--example` | string | 任务类型提示(web-scraping, code-generation, data-processing 等) |
+| `--session-id` | uuid | 继续之前的会话 |
+| `--plan-only` | boolean | 仅生成执行计划(用于智能路由) |
+| `--log` | boolean | 启用详细日志和 stream-json 输出 |
+| `--pretty-json` | boolean | 以人类可读方式格式化 JSON 输出 |
+| `--format` | string | 自定义输出模板 |
+| `--prompt-file` | path | 从文件读取提示词 |
+| `--print-command` | string\|boolean | 打印命令而不执行(bash\|ps\|json\|text) |
+
+### 使用场景
+
+**1. 测试提供商配置:**
+```bash
+npx ccai run --provider glm "测试消息" --print-command
+```
+
+**2. 调试执行问题:**
+```bash
+npx ccai run --provider glm "任务" --log --print-command=json
+```
+
+**3. 生成 Shell 脚本:**
+```bash
+npx ccai run --provider glm "分析任务" --print-command > run.sh
+chmod +x run.sh
+./run.sh
+```
+
+**4. CI/CD 集成:**
+```bash
+# 为 CI 流水线生成命令
+COMMAND=$(npx ccai run --provider glm "代码检查" --print-command=json)
+echo $COMMAND | jq -r 'join(" ")' | bash
+```
 
 ## 架构
 
@@ -197,7 +306,7 @@ CCAI 支持以下任务类型的特定优化:
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/ccai.git
+git clone https://github.com/Gaubee/ccai.git
 cd ccai
 
 # 安装依赖
@@ -249,6 +358,6 @@ MIT 许可证 - 详见 [LICENSE](./LICENSE)
 ## 链接
 
 - [文档](./docs)
-- [GitHub 仓库](https://github.com/your-username/ccai)
-- [问题追踪](https://github.com/your-username/ccai/issues)
+- [GitHub 仓库](https://github.com/Gaubee/ccai)
+- [问题追踪](https://github.com/Gaubee/ccai/issues)
 - [NPM 包](https://www.npmjs.com/package/ccai)

@@ -189,6 +189,7 @@ describe("run.command", () => {
         log: undefined,
         prettyJson: undefined,
         format: undefined,
+        printCommand: undefined,
       });
     });
 
@@ -215,6 +216,266 @@ describe("run.command", () => {
       }
 
       expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("should pass printCommand option when --print-command is provided", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "analyze this code", "--print-command"],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("glm", "analyze this code", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: true,
+      });
+    });
+
+    it("should pass printCommand with other options", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        [
+          "--provider",
+          "glm",
+          "--example",
+          "code-generation",
+          "--session-id",
+          "test-session",
+          "--log",
+          "generate code",
+          "--print-command",
+        ],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("glm", "generate code", {
+        taskType: "code-generation",
+        sessionId: "test-session",
+        planOnly: undefined,
+        log: true,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: true,
+      });
+    });
+
+    it("should pass all options correctly including printCommand", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        [
+          "--provider",
+          "minimax",
+          "--example",
+          "web-scraping",
+          "--session-id",
+          "abc-123",
+          "--plan-only",
+          "--log",
+          "--pretty-json",
+          "--format",
+          "custom-template",
+          "scrape website",
+          "--print-command",
+        ],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("minimax", "scrape website", {
+        taskType: "web-scraping",
+        sessionId: "abc-123",
+        planOnly: true,
+        log: true,
+        prettyJson: true,
+        format: "custom-template",
+        printCommand: true,
+      });
+    });
+
+    it("should work with printCommand and prompt file", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      // Mock readFile
+      const mockReadFile = vi.fn().mockResolvedValue("file prompt content");
+      vi.doMock("node:fs/promises", () => ({
+        readFile: mockReadFile,
+      }));
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "--prompt-file", "/test/prompt.txt", "--print-command"],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("glm", "file prompt content", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: true,
+      });
+    });
+
+    it("should pass 'json' format to printCommand when --print-command=json is used", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "--print-command", "json", "analyze code"],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: "json",
+      });
+    });
+
+    it("should pass 'text' format to printCommand when --print-command=text is used", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "--print-command", "text", "analyze code"],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: "text",
+      });
+    });
+
+    it("should pass 'bash' format to printCommand when --print-command=bash is used", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "--print-command", "bash", "analyze code"],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: "bash",
+      });
+    });
+
+    it("should pass 'ps' format to printCommand when --print-command=ps is used", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "--print-command", "ps", "analyze code"],
+        { from: "user" }
+      );
+
+      expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: "ps",
+      });
+    });
+
+    it("should not enter REPL mode when printCommand is enabled without prompt", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+      const { startREPL } = await import("@/utils/repl.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "--print-command"],
+        { from: "user" }
+      );
+
+      // Should not call startREPL
+      expect(startREPL).not.toHaveBeenCalled();
+
+      // Should execute with empty prompt
+      expect(executeAI).toHaveBeenCalledWith("glm", "", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: true,
+      });
+    });
+
+    it("should not enter REPL mode when printCommand with format is enabled without prompt", async () => {
+      const { createRunCommand } = await import("./run.command.js");
+      const { executeAI } = await import("@/core/executor.js");
+      const { startREPL } = await import("@/utils/repl.js");
+
+      const command = createRunCommand();
+
+      await command.parseAsync(
+        ["--provider", "glm", "--print-command", "bash"],
+        { from: "user" }
+      );
+
+      // Should not call startREPL
+      expect(startREPL).not.toHaveBeenCalled();
+
+      // Should execute with empty prompt
+      expect(executeAI).toHaveBeenCalledWith("glm", "", {
+        taskType: undefined,
+        sessionId: undefined,
+        planOnly: undefined,
+        log: undefined,
+        prettyJson: undefined,
+        format: undefined,
+        printCommand: "bash",
+      });
     });
   });
 });

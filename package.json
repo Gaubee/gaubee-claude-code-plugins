@@ -1,6 +1,6 @@
 {
   "name": "ccai",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Claude Code AI Assistant - Intelligent AI provider management and routing tool",
   "type": "module",
   "bin": {
@@ -36,8 +36,15 @@
     "cli",
     "developer-tools"
   ],
-  "author": "",
+  "author": {
+    "name": "Gaubee",
+    "email": "gaubeebangeel@gmail.com"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gaubee/ccai"
+  },
   "packageManager": "pnpm@10.18.1",
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.28",

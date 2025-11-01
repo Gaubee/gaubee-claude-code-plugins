@@ -108,6 +108,23 @@ npx ccai run --provider glm --session-id <uuid-from-plan>
 
 ---
 
+1. run.command.ts 新增一个options： --print-command，意味着不执行命令，而是打印最终要执行的 claude-code 命令。
+2. 支持 `--print-command=json`，那么打印JSON-Array结构，方便测试。并基于此，去完善我们的测试，提升测试覆盖率。
+3. 就是默认情况下 --print-command=bash，支持 `bash|ps|json|text` 这几种输出，如果是bash，就是把 --system-prompt 后面巨大的参数内容，变成 "($< filepath)"这种方式。
+不过如果是text，还是得考虑一下转义的问题，因为有人可能会用  `ccai run --print-command=text > xxx.sh` 的方式去转存命令
+4. 我们的系统提示词的注入，也到在最后再去做注入，类似于 `args: ['--print-command',"{{CCAI_SYSTEM_PROMPT}}"]`，然后如果是`printCommand==false`，那么就直接换成我们的 `readFile(system_prompt)`，否则根据`printCommand`的类型，去替换`{{CCAI_SYSTEM_PROMPT}}`
+6. 在printCommand模式下，如果没有提供prompts，那么不该进入`Interactive Mode`，而是直接省略`-p`参数。同时默认的logger的打印也不该有（比如`ℹ Executing task with provider: glm`这样的内容都不应该出现）
+
+---
+
+run.command.ts 的 provider 现在可空，如果为空，那么和直接在主agent中调用claude-code-commands一样： `/ccai [..prompts]`
+
+---
+
+provider的配置文件现在支持自定义command
+
+---
+
 1. 提升测试覆盖率，特别是其他 commands（除 run 外），基于 dryRun 来编写测试
 
 ---

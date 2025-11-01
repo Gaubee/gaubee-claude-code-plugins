@@ -100,6 +100,115 @@ The smart router will analyze the task and select the most suitable provider.
 
 - `npx ccai merge-settings <provider>` - Merge provider settings
 - `npx ccai merge-prompts --provider <name>` - Merge system prompts
+- `npx ccai run --provider <name> [prompt]` - Execute tasks with specific provider
+
+## Run Command
+
+The `run` command provides direct execution of tasks with AI providers, useful for testing and debugging.
+
+### Basic Usage
+
+```bash
+# Execute a task directly
+npx ccai run --provider glm "analyze this code"
+
+# Read prompt from file
+npx ccai run --provider glm --prompt-file ./prompt.txt
+
+# Continue from previous session
+npx ccai run --provider glm "continue" --session-id <uuid>
+```
+
+### Print Command Mode
+
+The `--print-command` option prints the final Claude command without executing it, useful for debugging or understanding the execution pipeline.
+
+**Output Formats:**
+
+- `bash` (default on macOS/Linux) - Uses bash file substitution `$(< "file")`
+- `ps` (default on Windows) - Uses PowerShell syntax `$(Get-Content "file" -Raw)`
+- `json` - Outputs command as JSON array for programmatic use
+- `text` - Outputs raw escaped command string
+
+**Examples:**
+
+```bash
+# Print command with OS-appropriate format
+npx ccai run --provider glm "analyze code" --print-command
+
+# macOS/Linux output:
+# claude --settings /path/to/settings.json --system-prompt $(< "/tmp/prompt.md") -p 'analyze code'
+
+# Force bash format
+npx ccai run --provider glm "analyze code" --print-command=bash
+
+# PowerShell format
+npx ccai run --provider glm "analyze code" --print-command=ps
+
+# JSON format (for scripts)
+npx ccai run --provider glm "analyze code" --print-command=json
+# ["claude","--settings","/path/to/settings.json","--system-prompt","..."]
+
+# Print command structure without prompt
+npx ccai run --provider glm --print-command
+# (omits -p parameter when no prompt provided)
+```
+
+### Advanced Options
+
+```bash
+# Task type hint for prompt optimization
+npx ccai run --provider glm "scrape website" --example web-scraping
+
+# Enable detailed logging
+npx ccai run --provider glm "process data" --log
+
+# Pretty JSON output
+npx ccai run --provider glm "generate report" --pretty-json
+
+# Custom output formatting
+npx ccai run --provider glm "analyze" --format "{{role}}: {{content}}"
+```
+
+### Options Reference
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `--provider` | string | **Required.** Provider name (e.g., glm, minimax) |
+| `--example` | string | Task type hint (web-scraping, code-generation, data-processing, etc.) |
+| `--session-id` | uuid | Continue from previous session |
+| `--plan-only` | boolean | Generate execution plan only (for intelligent routing) |
+| `--log` | boolean | Enable detailed logging with stream-json output |
+| `--pretty-json` | boolean | Format JSON output in human-readable way |
+| `--format` | string | Custom output template |
+| `--prompt-file` | path | Read prompt from file |
+| `--print-command` | string\|boolean | Print command without executing (bash\|ps\|json\|text) |
+
+### Use Cases
+
+**1. Testing Provider Configuration:**
+```bash
+npx ccai run --provider glm "test message" --print-command
+```
+
+**2. Debugging Execution Issues:**
+```bash
+npx ccai run --provider glm "task" --log --print-command=json
+```
+
+**3. Generating Shell Scripts:**
+```bash
+npx ccai run --provider glm "analysis task" --print-command > run.sh
+chmod +x run.sh
+./run.sh
+```
+
+**4. CI/CD Integration:**
+```bash
+# Generate command for CI pipeline
+COMMAND=$(npx ccai run --provider glm "lint code" --print-command=json)
+echo $COMMAND | jq -r 'join(" ")' | bash
+```
 
 ## Architecture
 
@@ -197,7 +306,7 @@ This command:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/ccai.git
+git clone https://github.com/Gaubee/ccai.git
 cd ccai
 
 # Install dependencies
@@ -249,6 +358,6 @@ MIT License - see [LICENSE](./LICENSE) for details.
 ## Links
 
 - [Documentation](./docs)
-- [GitHub Repository](https://github.com/your-username/ccai)
-- [Issue Tracker](https://github.com/your-username/ccai/issues)
+- [GitHub Repository](https://github.com/Gaubee/ccai)
+- [Issue Tracker](https://github.com/Gaubee/ccai/issues)
 - [NPM Package](https://www.npmjs.com/package/ccai)
