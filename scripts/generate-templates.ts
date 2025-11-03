@@ -22,7 +22,8 @@ function scanTemplates(dir: string, baseDir = dir): Templates {
       if (stat.isDirectory()) {
         scan(fullPath);
       } else {
-        const relativePath = relative(baseDir, fullPath);
+        // Use POSIX-style paths (forward slashes) for cross-platform compatibility
+        const relativePath = relative(baseDir, fullPath).replace(/\\/g, "/");
         const content = readFileSync(fullPath, "utf-8");
         result[relativePath] = content;
       }

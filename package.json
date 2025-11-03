@@ -1,6 +1,6 @@
 {
   "name": "ccai",
-  "version": "0.7.3",
+  "version": "0.7.5",
   "description": "Claude Code AI Assistant - Intelligent AI provider management and routing tool",
   "type": "module",
   "bin": {

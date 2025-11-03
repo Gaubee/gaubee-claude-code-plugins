@@ -18,7 +18,10 @@ export function createRunCommand(): Command {
     .option("--pretty-json", "Format JSON output in a human-readable way")
     .option("--format [template]", "Format output using template (default shows key info)")
     .option("--prompt-file <path>", "Read prompt from file instead of arguments")
-    .option("--print-command [format]", "Print the final claude command without executing it (text|json|bash|ps)")
+    .option(
+      "--print-command [format]",
+      "Print the final claude command without executing it (text|json|bash|ps)"
+    )
     .argument(
       "[prompt...]",
       "Task prompt (can be multiple arguments, or enter REPL mode if omitted)"
@@ -84,7 +87,7 @@ export function createRunCommand(): Command {
         });
       } catch (error) {
         logger.error(
-          `Failed to execute task: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to execute task: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`
         );
         process.exit(1);
       }

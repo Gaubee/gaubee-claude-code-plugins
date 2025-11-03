@@ -39,10 +39,13 @@ async function printClaudeCommand(
           const tempFile = join(tmpdir(), `ccai-prompt-${Date.now()}.md`);
           await writeFile(tempFile, systemPrompt || "", "utf-8");
 
+          // Normalize path for shell commands - use forward slashes for cross-platform compatibility
+          const normalizedPath = tempFile.replace(/\\/g, "/");
+
           if (outputFormat === "bash") {
-            return `$(< "${tempFile}")`;
+            return `$(< "${normalizedPath}")`;
           } else if (outputFormat === "ps") {
-            return `$(Get-Content "${tempFile}" -Raw)`;
+            return `$(Get-Content "${normalizedPath}" -Raw)`;
           }
         } else {
           // Text format - properly escaped for shell scripts
@@ -63,11 +66,14 @@ async function printClaudeCommand(
       // If it's the system prompt substitution, don't escape it
       if (arg.startsWith("$(")) return arg;
 
+      // Normalize Windows paths to use forward slashes for cross-platform compatibility
+      const normalizedArg = arg.replace(/\\/g, "/");
+
       // Handle normal arguments
-      if (arg.includes(" ") || arg.includes("\n") || arg.includes('"') || arg.includes("'")) {
-        return `'${arg.replace(/'/g, "'\\''")}'`;
+      if (normalizedArg.includes(" ") || normalizedArg.includes("\n") || normalizedArg.includes('"') || normalizedArg.includes("'")) {
+        return `'${normalizedArg.replace(/'/g, "'\\''")}'`;
       }
-      return arg;
+      return normalizedArg;
     };
 
     const commandParts = ["claude", ...newArgs.map(escapeForShell)];
