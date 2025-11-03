@@ -32,7 +32,7 @@ describe("list.command", () => {
       vi.mocked(listProviders).mockResolvedValue([]);
 
       const command = await import("./list.command.js");
-      await command.createListCommand().parseAsync(["node", "test", "list"]);
+      await command.createListCommand().parseAsync([], { from: "user" });
 
       expect(logger.warning).toHaveBeenCalledWith("No providers configured yet.");
       expect(logger.info).toHaveBeenCalledWith("Add a provider with: npx ccai add <provider-name>");
@@ -61,7 +61,7 @@ describe("list.command", () => {
         });
 
       const command = await import("./list.command.js");
-      await command.createListCommand().parseAsync(["node", "test", "list"]);
+      await command.createListCommand().parseAsync([], { from: "user" });
 
       expect(console.log).toHaveBeenCalled();
       expect(readJsonFile).toHaveBeenCalledTimes(2);
@@ -81,7 +81,7 @@ describe("list.command", () => {
       });
 
       const command = await import("./list.command.js");
-      await command.createListCommand().parseAsync(["node", "test", "list", "--verbose"]);
+      await command.createListCommand().parseAsync(["--verbose"], { from: "user" });
 
       expect(console.log).toHaveBeenCalled();
       expect(readJsonFile).toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe("list.command", () => {
       } as any);
 
       const command = await import("./list.command.js");
-      await command.createListCommand().parseAsync(["node", "test", "list"]);
+      await command.createListCommand().parseAsync([], { from: "user" });
 
       // Should use provider name as fallback
       expect(console.log).toHaveBeenCalled();

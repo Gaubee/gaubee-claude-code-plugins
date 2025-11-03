@@ -30,7 +30,7 @@ describe("init.command", () => {
       const { logger } = await import("@/utils/logger.js");
 
       const command = await import("./init.command.js");
-      await command.createInitCommand().parseAsync(["node", "test", "init"]);
+      await command.createInitCommand().parseAsync([], { from: "user" });
 
       expect(installAllTemplates).toHaveBeenCalled();
       expect(generateEvalCommand).toHaveBeenCalled();
@@ -42,7 +42,7 @@ describe("init.command", () => {
       const { logger } = await import("@/utils/logger.js");
 
       const command = await import("./init.command.js");
-      await command.createInitCommand().parseAsync(["node", "test", "init", "--dry-run"]);
+      await command.createInitCommand().parseAsync(["--dry-run"], { from: "user" });
 
       // Verify that installer was called with dry-run context
       const calls = vi.mocked(installAllTemplates).mock.calls[0];
@@ -59,7 +59,7 @@ describe("init.command", () => {
       const { installAllTemplates } = await import("@/core/installer.js");
 
       const command = await import("./init.command.js");
-      await command.createInitCommand().parseAsync(["node", "test", "init", "--force"]);
+      await command.createInitCommand().parseAsync(["--force"], { from: "user" });
 
       expect(installAllTemplates).toHaveBeenCalledWith(
         true, // force = true
@@ -71,7 +71,7 @@ describe("init.command", () => {
       const { logger } = await import("@/utils/logger.js");
 
       const command = await import("./init.command.js");
-      await command.createInitCommand().parseAsync(["node", "test", "init", "--dry-run"]);
+      await command.createInitCommand().parseAsync(["--dry-run"], { from: "user" });
 
       expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Total operations:"));
       expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Directories to create:"));
