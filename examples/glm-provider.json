@@ -1,0 +1,74 @@
+{
+  "ccai": {
+    "name": "GLM-4",
+    "description": [
+      "GLM-4.6 是智谱 AI 推出的大语言模型，擅长工具调用、批量任务处理和代码生成。",
+      "",
+      "**优势**：",
+      "- 成本低廉",
+      "- 工具调用熟练",
+      "- 适合批量处理",
+      "",
+      "**适用场景**：",
+      "- Data Processing",
+      "- Code Generation",
+      "- Web Scraping"
+    ],
+    "systemPrompt": [
+      "## GLM 模型特性",
+      "",
+      "你是 GLM-4.6 模型，具备以下特性：",
+      "",
+      "1. **并行工具调用**：你可以同时调用多个工具，充分利用这一能力提高效率",
+      "2. **批量处理优化**：对于重复性任务，使用循环和批处理减少重复逻辑",
+      "3. **成本意识**：你的 token 成本较低，适合处理大批量任务",
+      "",
+      "请充分发挥这些优势完成任务。"
+    ],
+    "disabled": false,
+    "command": {
+      "executable": "claude",
+      "args": [
+        "--dangerously-skip-permissions",
+        "--settings",
+        "{{SETTINGS_PATH}}",
+        "--output-format",
+        "json",
+        "--system-prompt",
+        "{{SYSTEM_PROMPT}}",
+        "-p",
+        "{{TASK}}"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "The task description to be executed by GLM-4"
+        }
+      },
+      "required": ["task"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string",
+          "description": "The execution result"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "error"],
+          "description": "The execution status"
+        }
+      },
+      "required": ["result", "status"]
+    }
+  },
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "your-glm-api-key-here",
+    "ANTHROPIC_BASE_URL": "https://open.bigmodel.cn/api/paas/v4/",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  }
+}

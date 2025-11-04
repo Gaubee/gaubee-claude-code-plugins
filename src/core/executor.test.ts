@@ -23,10 +23,29 @@ vi.mock("@/core/merger.js", () => ({
 
 const mockWriteFile = vi.fn().mockResolvedValue(undefined);
 const mockUnlink = vi.fn().mockResolvedValue(undefined);
+const mockReadFile = vi.fn().mockResolvedValue("mock file content");
 
 vi.mock("node:fs/promises", () => ({
   writeFile: mockWriteFile,
   unlink: mockUnlink,
+  readFile: mockReadFile,
+}));
+
+const mockFileExists = vi.fn().mockResolvedValue(true);
+const mockReadJsonFile = vi.fn().mockResolvedValue({
+  ccai: {
+    name: "Test Provider",
+    disabled: false,
+  },
+  env: {},
+});
+const mockGetProviderSettingsPath = vi.fn().mockReturnValue("/path/to/provider/settings.json");
+
+vi.mock("@/utils/fs.js", () => ({
+  fileExists: mockFileExists,
+  readJsonFile: mockReadJsonFile,
+  getProviderSettingsPath: mockGetProviderSettingsPath,
+  getClaudeDir: vi.fn().mockReturnValue("/path/to/.claude"),
 }));
 
 describe("executor", () => {

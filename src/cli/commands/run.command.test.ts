@@ -42,6 +42,7 @@ describe("run.command", () => {
       await command.parseAsync(["--provider", "glm", "analyze this code"], { from: "user" });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze this code", {
+        input: "analyze this code",
         taskType: undefined,
       });
     });
@@ -58,6 +59,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "scrape this website", {
+        input: "scrape this website",
         taskType: "web-scraping",
       });
     });
@@ -74,6 +76,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze this complex code", {
+        input: "analyze this complex code",
         taskType: undefined,
       });
     });
@@ -107,8 +110,9 @@ describe("run.command", () => {
       // Should call startREPL to get the prompt
       expect(startREPL).toHaveBeenCalled();
 
-      // Should execute with the prompt from REPL
+      // Should execute with the prompt from REPL (used for both prompt and input)
       expect(executeAI).toHaveBeenCalledWith("glm", "prompt from REPL", {
+        input: "prompt from REPL",
         taskType: undefined,
       });
     });
@@ -145,6 +149,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "test prompt", {
+        input: "test prompt",
         taskType: "web-scraping",
       });
     });
@@ -161,6 +166,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "test prompt", {
+        input: "test prompt",
         taskType: "code-generation",
       });
     });
@@ -183,6 +189,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "prompt content from file", {
+        input: "prompt content from file",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,
@@ -230,6 +237,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze this code", {
+        input: "analyze this code",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,
@@ -262,6 +270,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "generate code", {
+        input: "generate code",
         taskType: "code-generation",
         sessionId: "test-session",
         planOnly: undefined,
@@ -298,6 +307,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("minimax", "scrape website", {
+        input: "scrape website",
         taskType: "web-scraping",
         sessionId: "abc-123",
         planOnly: true,
@@ -326,6 +336,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "file prompt content", {
+        input: "file prompt content",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,
@@ -348,6 +359,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
+        input: "analyze code",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,
@@ -370,6 +382,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
+        input: "analyze code",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,
@@ -392,6 +405,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
+        input: "analyze code",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,
@@ -414,6 +428,7 @@ describe("run.command", () => {
       );
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
+        input: "analyze code",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,
@@ -441,6 +456,7 @@ describe("run.command", () => {
 
       // Should execute with empty prompt
       expect(executeAI).toHaveBeenCalledWith("glm", "", {
+        input: "",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,
@@ -468,6 +484,7 @@ describe("run.command", () => {
 
       // Should execute with empty prompt
       expect(executeAI).toHaveBeenCalledWith("glm", "", {
+        input: "",
         taskType: undefined,
         sessionId: undefined,
         planOnly: undefined,

@@ -85,6 +85,163 @@ This generates the `/ccai-glm` command in Claude Code.
 
 The smart router will analyze the task and select the most suitable provider.
 
+## Advanced Configuration
+
+### Custom Commands
+
+CCAI supports custom command execution for non-Claude CLI providers (e.g., OpenAI API, GLM API). You can configure custom commands in your provider settings:
+
+```json
+{
+  "ccai": {
+    "name": "OpenAI GPT-4",
+    "command": {
+      "executable": "curl",
+      "args": [
+        "-X", "POST",
+        "https://api.openai.com/v1/chat/completions",
+        "-H", "Content-Type: application/json",
+        "-H", "Authorization: Bearer {{ENV.OPENAI_API_KEY}}",
+        "-d", "{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"{{SYSTEM_PROMPT}}\"},{\"role\":\"user\",\"content\":\"{{PROMPT}}\"}]}"
+      ]
+    }
+  }
+}
+```
+
+**Supported Placeholders:**
+
+- `{{SETTINGS_PATH}}` - Path to merged settings file
+- `{{SYSTEM_PROMPT}}` - Merged system prompt content
+- `{{PROMPT}}` - Full prompt with context (from `--prompt`, `--prompt-file`, or inputPrompt args)
+- `{{INPUT}}` - Input data that conforms to inputSchema (from `--input`, `--input-file`, or inputPrompt args)
+- `{{TASK}}` - **Deprecated**: Use `{{PROMPT}}` instead (kept for backward compatibility)
+- `{{ENV.*}}` - Environment variables (e.g., `{{ENV.API_KEY}}`)
+
+### Variant Matching
+
+CCAI supports conditional arguments using variant matching, allowing you to dynamically change command arguments based on runtime options:
+
+```json
+{
+  "ccai": {
+    "command": {
+      "executable": "claude",
+      "args": [
+        "--settings", "{{SETTINGS_PATH}}",
+        "--output-format",
+        {
+          "{{log}}+{{prettyJson}}": {
+            "true+true": ["stream-json", "--verbose"],
+            "false+false": ["json"],
+            "*": ["json"]
+          }
+        },
+        {
+          "{{sessionId}}": {
+            "{undefined,null}": [],
+            "*": ["--resume", "{{sessionId}}"]
+          }
+        },
+        "-p", "{{PROMPT}}"
+      ]
+    }
+  }
+}
+```
+
+**How it works:**
+
+1. **Expression**: First level key (e.g., `"{{log}}+{{prettyJson}}"`) - placeholders are replaced with actual values
+2. **Pattern Matching**: Second level keys use [minimatch](https://github.com/isaacs/minimatch) glob patterns:
+   - Exact match: `"true"`
+   - Wildcard: `"*"`
+   - Brace expansion: `"{true,false}"` or `"{undefined,null}"`
+   - Glob patterns: `"true+*"`, `"*+*+*"`
+3. **Result**: Matched pattern returns an array of arguments to insert
+
+**Available Placeholders for Variant Matching:**
+
+- `{{log}}` - Boolean from `--log` option
+- `{{prettyJson}}` - Boolean from `--pretty-json` option
+- `{{sessionId}}` - String from `--session-id` option (or "undefined")
+- `{{taskType}}` - String from `--example` option (or "undefined")
+- Any custom placeholder from `CommandPlaceholders`
+
+### Multi-line Text Support
+
+Both `description` and `systemPrompt` support `string[]` for better readability:
+
+```json
+{
+  "ccai": {
+    "description": [
+      "Provider description line 1",
+      "",
+      "**Strengths**:",
+      "- Feature 1",
+      "- Feature 2"
+    ],
+    "systemPrompt": [
+      "## Instructions",
+      "",
+      "You are using this model.",
+      "",
+      "1. Guideline 1",
+      "2. Guideline 2"
+    ]
+  }
+}
+```
+
+Arrays are automatically joined with newlines (`\n`), making JSON configuration files much more readable than using `\n` escape sequences.
+
+### Input/Output Schemas
+
+Define input and output schemas to guide AI behavior and validate responses:
+
+```json
+{
+  "ccai": {
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "The task to be executed"
+        }
+      },
+      "required": ["task"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string",
+          "description": "The execution result"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "error"]
+        }
+      },
+      "required": ["result", "status"]
+    }
+  }
+}
+```
+
+**Schema Features:**
+
+- **Input Schema**: Injected into system prompt to guide AI on expected input format
+- **Output Schema**: Injected into system prompt to guide AI on expected output format
+- **Validation**: Output is validated against schema; warnings are logged but execution continues
+- **Documentation**: Schemas are formatted as readable Markdown in the system prompt
+
+**Example Output:**
+
+See `examples/openai-provider.json` and `examples/glm-provider.json` for complete configuration examples.
+
 ## CLI Commands
 
 ### User Commands
@@ -96,6 +253,79 @@ The smart router will analyze the task and select the most suitable provider.
 - `npx ccai enable <provider>` - Enable a provider
 - `npx ccai disable <provider>` - Disable a provider
 - `npx ccai update` - Update command files
+
+### Adding Providers with Command Templates
+
+The `add` command supports a `--command` option that automatically configures providers with predefined command templates:
+
+```bash
+# Add Claude CLI provider (default behavior)
+npx ccai add my-claude --command=claude
+
+# Add Google Gemini CLI provider
+npx ccai add my-gemini --command=gemini
+
+# Add Anthropic Codex CLI provider
+npx ccai add my-codex --command=codex
+```
+
+**Template Features:**
+
+Each template includes:
+- Pre-configured command executable and arguments
+- Variant matching for dynamic behavior (logging, JSON formatting, session management)
+- Optimized system prompts for the specific CLI tool
+- Provider-specific descriptions
+
+**Claude Template:**
+- Executable: `claude`
+- Features: Session management, logging, JSON formatting, task context injection
+- System Prompt: Emphasizes tool-calling, batch processing, and cost efficiency
+
+**Gemini Template:**
+- Executable: `gemini`
+- Features: YOLO mode, JSON output, direct prompt execution
+- System Prompt: Highlights speed and reliability for simple tasks
+- Note: Currently does not support external session management
+
+**Codex Template:**
+- Executable: `codex`
+- Features: Full auto mode, sandbox access, session resume capability
+- System Prompt: Optimized for autonomous execution and tool-intensive workflows
+
+**Example Configuration:**
+
+After running `npx ccai add my-gemini --command=gemini`, the generated configuration will include:
+
+```json
+{
+  "ccai": {
+    "name": "Gemini",
+    "description": [
+      "Google Gemini CLI provider",
+      "",
+      "**Strengths**:",
+      "- Fast response times",
+      "- Good for simple tasks",
+      "- JSON output support"
+    ],
+    "systemPrompt": [
+      "You are executing tasks via Google Gemini CLI.",
+      "Focus on providing fast, reliable responses."
+    ],
+    "command": {
+      "executable": "gemini",
+      "args": [
+        "--yolo",
+        "--output-format", "json",
+        "--prompt", "{{PROMPT}}"
+      ]
+    }
+  }
+}
+```
+
+You can then customize the configuration as needed using `npx ccai get my-gemini`.
 
 ### Internal Commands (used by Claude Code)
 
@@ -113,12 +343,28 @@ The `run` command provides direct execution of tasks with AI providers, useful f
 # Execute a task directly
 npx ccai run --provider glm "analyze this code"
 
+# Separate prompt and input
+npx ccai run --provider glm --prompt "analyze the following" --input "code content"
+
 # Read prompt from file
 npx ccai run --provider glm --prompt-file ./prompt.txt
+
+# Read input from file (uses inputSchema structure)
+npx ccai run --provider glm --input-file ./data.json
+
+# Combine: prompt from file, input from args
+npx ccai run --provider glm --prompt-file ./context.md --input "specific data"
 
 # Continue from previous session
 npx ccai run --provider glm "continue" --session-id <uuid>
 ```
+
+**Prompt vs Input:**
+
+- `--prompt` / `--prompt-file`: Full prompt with context (maps to `{{PROMPT}}` placeholder)
+- `--input` / `--input-file`: Input data conforming to inputSchema (maps to `{{INPUT}}` placeholder)
+- If neither is specified, the command arguments are used for both
+- If only one is specified, the other defaults to the same value
 
 ### Print Command Mode
 

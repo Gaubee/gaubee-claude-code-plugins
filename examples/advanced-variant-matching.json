@@ -1,0 +1,112 @@
+{
+  "ccai": {
+    "name": "Advanced Provider with Variant Matching",
+    "description": "Example configuration demonstrating variant matching capabilities",
+    "disabled": false,
+    "command": {
+      "executable": "claude",
+      "args": [
+        "--dangerously-skip-permissions",
+        "--settings",
+        "{{SETTINGS_PATH}}",
+        {
+          "//": "Example 1: Simple boolean condition",
+          "{{log}}": {
+            "true": ["--output-format", "stream-json", "--verbose"],
+            "false": ["--output-format", "json"]
+          }
+        },
+        {
+          "//": "Example 2: Conditional argument - only add if sessionId exists",
+          "{{sessionId}}": {
+            "{undefined,null}": [],
+            "*": ["--resume", "{{sessionId}}"]
+          }
+        },
+        {
+          "//": "Example 3: Complex expression with multiple conditions",
+          "{{log}}+{{prettyJson}}": {
+            "true+true": ["--format", "pretty-stream"],
+            "true+false": ["--format", "stream"],
+            "false+true": ["--format", "pretty"],
+            "*": []
+          }
+        },
+        {
+          "//": "Example 4: Task type specific options",
+          "{{taskType}}": {
+            "web-scraping": ["--timeout", "60"],
+            "code-generation": ["--max-tokens", "4000"],
+            "{undefined,null}": [],
+            "*": []
+          }
+        },
+        {
+          "//": "Example 5: Glob pattern matching",
+          "{{taskType}}": {
+            "web-*": ["--network-retry", "3"],
+            "code-*": ["--syntax-check"],
+            "*": []
+          }
+        },
+        "--system-prompt",
+        "{{SYSTEM_PROMPT}}",
+        "-p",
+        "{{TASK}}"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "The task to execute"
+        }
+      }
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "your-api-key-here",
+    "ANTHROPIC_BASE_URL": "https://api.example.com/v1/"
+  },
+  "_notes": {
+    "variant-matching-patterns": {
+      "exact": "\"true\" - matches exactly \"true\"",
+      "wildcard": "\"*\" - matches anything",
+      "brace-expansion": "\"{opt1,opt2,opt3}\" - matches any of the options",
+      "glob": "\"prefix-*\" - matches anything starting with \"prefix-\"",
+      "complex-glob": "\"*+*+*\" - matches three parts separated by +"
+    },
+    "available-placeholders": {
+      "runtime-options": [
+        "{{log}} - boolean from --log",
+        "{{prettyJson}} - boolean from --pretty-json",
+        "{{sessionId}} - string from --session-id (or 'undefined')",
+        "{{taskType}} - string from --example (or 'undefined')"
+      ],
+      "command-placeholders": [
+        "{{SETTINGS_PATH}} - merged settings file path",
+        "{{SYSTEM_PROMPT}} - merged system prompt",
+        "{{TASK}} - user task description"
+      ],
+      "environment": [
+        "{{ENV.VAR_NAME}} - environment variable"
+      ]
+    },
+    "execution-order": [
+      "1. Evaluate expressions: replace placeholders in variant match keys",
+      "2. Match patterns: find matching pattern using minimatch",
+      "3. Resolve variants: replace variant objects with matched args arrays",
+      "4. Replace placeholders: replace {{PLACEHOLDER}} in final args",
+      "5. Execute command: spawn process with final args"
+    ]
+  }
+}

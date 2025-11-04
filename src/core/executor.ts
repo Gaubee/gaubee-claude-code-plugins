@@ -1,10 +1,19 @@
-import type { ExecuteOptions } from "@/types/index.js";
+import type { ExecuteOptions, ProviderSettings } from "@/types/index.js";
+import { fileExists, getProviderSettingsPath, readJsonFile } from "@/utils/fs.js";
 import { logger } from "@/utils/logger.js";
 import { spawn } from "node:child_process";
 import { unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import {
+  executeCustomCommand,
+  prepareCommandArgs,
+  validateCommand,
+  type CommandPlaceholders,
+} from "./command-executor.js";
+import { buildVariantPlaceholders } from "./variant-matcher.js";
 import { mergeSettings, mergeSystemPrompts } from "./merger.js";
+import { type JsonSchema, validateAndWarn } from "./schema-injector.js";
 
 /**
  * Get default print command format based on OS
@@ -86,7 +95,7 @@ async function printClaudeCommand(
  */
 export async function executeAI(
   provider: string,
-  task: string,
+  prompt: string,
   options: ExecuteOptions = {}
 ): Promise<void> {
   // Disable logger output in print-command mode
@@ -96,19 +105,134 @@ export async function executeAI(
     logger.info(`Executing task with provider: ${logger.provider(provider)}`);
   }
 
-  // 1. Merge settings
+  // Get input from options (defaults to prompt if not specified)
+  const input = options.input ?? prompt;
+
+  // 1. Read provider settings to check for custom command
+  const providerSettingsPath = getProviderSettingsPath(provider);
+  const providerSettings = await readJsonFile<ProviderSettings>(providerSettingsPath);
+
+  // 2. Merge settings
   const settingsPath = await mergeSettings(provider);
   if (!isPrintMode) {
     logger.info(`Settings merged: ${logger.path(settingsPath)}`);
   }
 
-  // 2. Merge system prompts
+  // 3. Merge system prompts
   const systemPrompt = await mergeSystemPrompts({
     provider,
     taskType: options.taskType,
   });
 
-  // 3. Handle large prompts by writing to file
+  // 4. Check if custom command is configured
+  if (providerSettings.ccai?.command) {
+    await executeWithCustomCommand(
+      provider,
+      prompt,
+      input,
+      providerSettings,
+      settingsPath,
+      systemPrompt,
+      options
+    );
+    return;
+  }
+
+  // 5. Fall back to default Claude CLI execution
+  await executeWithClaudeCLI(provider, prompt, input, settingsPath, systemPrompt, options);
+}
+
+/**
+ * Execute with custom command
+ */
+async function executeWithCustomCommand(
+  provider: string,
+  prompt: string,
+  input: string,
+  settings: ProviderSettings,
+  settingsPath: string,
+  systemPrompt: string,
+  options: ExecuteOptions
+): Promise<void> {
+  const command = settings.ccai!.command!;
+  const isPrintMode = !!options.printCommand;
+
+  // Validate command configuration
+  validateCommand(command);
+
+  // Prepare placeholders
+  const placeholders: CommandPlaceholders = {
+    SETTINGS_PATH: settingsPath,
+    SYSTEM_PROMPT: systemPrompt,
+    PROMPT: prompt,
+    INPUT: input,
+    // Deprecated: kept for backward compatibility
+    TASK: prompt,
+  };
+
+  // Build variant placeholders
+  const variantPlaceholders = buildVariantPlaceholders(placeholders, options);
+
+  // Print command mode
+  if (isPrintMode) {
+    const finalArgs = prepareCommandArgs(command, placeholders, variantPlaceholders);
+    const format =
+      typeof options.printCommand === "boolean" ? getDefaultPrintFormat() : options.printCommand;
+
+    if (format === "json") {
+      console.log(JSON.stringify([command.executable, ...finalArgs]));
+    } else {
+      const escapeForShell = (arg: string): string => {
+        if (arg.includes(" ") || arg.includes("\n") || arg.includes('"') || arg.includes("'")) {
+          return `'${arg.replace(/'/g, "'\\''")}'`;
+        }
+        return arg;
+      };
+      console.log([command.executable, ...finalArgs.map(escapeForShell)].join(" "));
+    }
+    return;
+  }
+
+  // Execute custom command
+  if (!isPrintMode) {
+    logger.info(`Using custom command: ${logger.command(command.executable)}`);
+  }
+
+  try {
+    const output = await executeCustomCommand(command, placeholders, {
+      captureOutput: !!settings.ccai?.outputSchema,
+      stdio: settings.ccai?.outputSchema ? "pipe" : "inherit",
+      variantPlaceholders,
+    });
+
+    // Validate output if schema is configured
+    if (settings.ccai?.outputSchema && output) {
+      validateAndWarn(output, settings.ccai.outputSchema as JsonSchema, provider);
+    }
+
+    if (!isPrintMode) {
+      logger.success("Task completed successfully");
+    }
+  } catch (error) {
+    logger.error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
+}
+
+/**
+ * Execute with default Claude CLI
+ */
+async function executeWithClaudeCLI(
+  provider: string,
+  prompt: string,
+  input: string,
+  settingsPath: string,
+  systemPrompt: string,
+  options: ExecuteOptions
+): Promise<void> {
+  const isPrintMode = !!options.printCommand;
+
+  // Handle large prompts by writing to file
   const useFile = systemPrompt.length > 32 * 1024;
   let promptPath: string | undefined;
 
@@ -120,7 +244,7 @@ export async function executeAI(
     }
   }
 
-  // 4. Prepare execution arguments
+  // Prepare execution arguments
   const args = ["--dangerously-skip-permissions", "--settings", settingsPath];
 
   // Add output format based on log option
@@ -152,23 +276,21 @@ export async function executeAI(
     args.push("--system-prompt", "{{CCAI_SYSTEM_PROMPT}}");
   }
 
-  // Add task (only if task is not empty)
-  if (task) {
-    args.push("-p", task);
+  // Add prompt (only if prompt is not empty)
+  if (prompt) {
+    args.push("-p", prompt);
   }
 
-  // 5. If print-command mode, print and return
+  // If print-command mode, print and return
   if (options.printCommand) {
     await printClaudeCommand(args, options.printCommand, systemPrompt);
     return;
   }
 
-  // 6. Replace placeholder with actual system prompt for execution
-  const finalArgs = args.map(arg =>
-    arg === "{{CCAI_SYSTEM_PROMPT}}" ? systemPrompt : arg
-  );
+  // Replace placeholder with actual system prompt for execution
+  const finalArgs = args.map((arg) => (arg === "{{CCAI_SYSTEM_PROMPT}}" ? systemPrompt : arg));
 
-  // 7. Execute Claude
+  // Execute Claude
   logger.info("Starting Claude execution...");
   try {
     // Determine output handling mode

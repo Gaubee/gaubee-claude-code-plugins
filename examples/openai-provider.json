@@ -1,0 +1,85 @@
+{
+  "ccai": {
+    "name": "OpenAI GPT-4",
+    "description": [
+      "OpenAI GPT-4 model with custom API integration.",
+      "",
+      "**Strengths**:",
+      "- High-quality responses",
+      "- Strong reasoning capabilities",
+      "- Wide knowledge base",
+      "",
+      "**Use Cases**:",
+      "- Complex reasoning tasks",
+      "- Creative writing",
+      "- Code generation"
+    ],
+    "systemPrompt": [
+      "## OpenAI GPT-4 Instructions",
+      "",
+      "You are using OpenAI GPT-4 model. Please follow these guidelines:",
+      "",
+      "1. Provide detailed and accurate responses",
+      "2. Use structured thinking for complex problems",
+      "3. Be concise yet comprehensive"
+    ],
+    "disabled": false,
+    "command": {
+      "executable": "curl",
+      "args": [
+        "-X",
+        "POST",
+        "https://api.openai.com/v1/chat/completions",
+        "-H",
+        "Content-Type: application/json",
+        "-H",
+        "Authorization: Bearer {{ENV.OPENAI_API_KEY}}",
+        "-d",
+        "{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"{{SYSTEM_PROMPT}}\"},{\"role\":\"user\",\"content\":\"{{TASK}}\"}]}"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "The task or question to be processed by GPT-4"
+        }
+      },
+      "required": ["task"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the completion"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "The generated response"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["choices"]
+    }
+  },
+  "env": {
+    "OPENAI_API_KEY": "your-openai-api-key-here"
+  }
+}

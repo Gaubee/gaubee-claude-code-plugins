@@ -1,6 +1,7 @@
 import type { ProviderSettings } from "@/types/index.js";
 import { getProviderSettingsPath, listProviders, readJsonFile } from "@/utils/fs.js";
 import { logger } from "@/utils/logger.js";
+import { normalizeStringOrArray } from "@/utils/string-array.js";
 import { Command } from "commander";
 
 export function createListCommand(): Command {
@@ -29,7 +30,7 @@ export function createListCommand(): Command {
           console.log(`\n${logger.provider(name)} ${status}`);
 
           if (options.verbose && settings.ccai?.description) {
-            console.log(`  ${settings.ccai.description.split("\n")[0]}`);
+            console.log(`  ${normalizeStringOrArray(settings.ccai.description).split("\n")[0]}`);
           }
 
           if (options.verbose) {

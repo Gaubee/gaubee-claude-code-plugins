@@ -1,13 +1,59 @@
 import { z } from "zod";
 
 /**
+ * Variant match object for conditional arguments
+ *
+ * Example:
+ * {
+ *   "{{log}}+{{prettyJson}}": {
+ *     "true+true": ["stream-json"],
+ *     "false+false": ["json"],
+ *     "*": ["json"]
+ *   }
+ * }
+ */
+export const VariantMatchSchema = z.record(
+  z.string(), // expression like "{{log}}+{{prettyJson}}"
+  z.record(
+    z.string(), // pattern like "true+true", "*", "{true|false}"
+    z.array(z.string()) // resulting args
+  )
+);
+
+export type VariantMatch = z.infer<typeof VariantMatchSchema>;
+
+/**
+ * Command argument can be either a string or a variant match object
+ */
+export const CommandArgSchema = z.union([z.string(), VariantMatchSchema]);
+
+export type CommandArg = z.infer<typeof CommandArgSchema>;
+
+/**
+ * Custom command configuration for non-Claude CLI providers
+ */
+export const CustomCommandSchema = z.object({
+  executable: z.string(),
+  args: z.array(CommandArgSchema).optional(),
+});
+
+export type CustomCommand = z.infer<typeof CustomCommandSchema>;
+
+/**
  * Provider CCAI metadata configuration
  */
 export const ProviderCcaiConfigSchema = z.looseObject({
   name: z.string().optional(),
-  description: z.string().optional(),
-  systemPrompt: z.string().optional(),
+  description: z.union([z.string(), z.array(z.string())]).optional(),
+  systemPrompt: z.union([z.string(), z.array(z.string())]).optional(),
   disabled: z.boolean().optional().default(false),
+
+  // Custom command configuration (for non-Claude CLI providers)
+  command: CustomCommandSchema.optional(),
+
+  // Input/Output schemas for documentation and validation
+  inputSchema: z.record(z.string(), z.unknown()).optional(),
+  outputSchema: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ProviderCcaiConfig = z.infer<typeof ProviderCcaiConfigSchema>;
@@ -59,6 +105,7 @@ export type PrintCommandFormat = z.infer<typeof PrintCommandFormatSchema>;
  */
 export const ExecuteOptionsSchema = z
   .object({
+    input: z.string().optional(),
     taskType: TaskTypeSchema.optional(),
     skipLog: z.boolean().optional(),
     sessionId: z.string().optional(),

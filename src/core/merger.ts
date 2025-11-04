@@ -12,6 +12,8 @@ import {
   writeJsonFile,
 } from "@/utils/fs.js";
 import { logger } from "@/utils/logger";
+import { normalizeStringOrArray } from "@/utils/string-array.js";
+import { injectSchemaToPrompt } from "./schema-injector.js";
 import { isArray, mergeWith } from "lodash-es";
 import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -100,28 +102,41 @@ This plan will be used to evaluate which provider is best suited for the task.`)
 
   // 4. Provider-specific prompt from settings
   const settingsPath = getProviderSettingsPath(options.provider);
+  let providerSettings: ProviderSettings | undefined;
+
   if (await fileExists(settingsPath)) {
-    const settings = await readJsonFile<ProviderSettings>(settingsPath);
-    if (settings.ccai?.systemPrompt) {
+    providerSettings = await readJsonFile<ProviderSettings>(settingsPath);
+    if (providerSettings.ccai?.systemPrompt) {
+      // Normalize string or string[] to string
+      const normalizedPrompt = normalizeStringOrArray(providerSettings.ccai.systemPrompt);
+
       // Replace provider placeholder
-      const providerPrompt = settings.ccai.systemPrompt.replace(
-        /\{\{PROVIDER\}\}/g,
-        options.provider
-      );
+      const providerPrompt = normalizedPrompt.replace(/\{\{PROVIDER\}\}/g, options.provider);
       prompts.push(providerPrompt);
     }
   }
 
-  // 4. Custom prompts
+  // 5. Custom prompts
   if (options.customPrompts && options.customPrompts.length > 0) {
     prompts.push(...options.customPrompts);
   }
 
-  // 5. Log requirement prompt
+  // 6. Log requirement prompt
   prompts.push(getLogRequirementPrompt(options.provider));
 
   // Join with separator
-  return prompts.join("\n\n---\n\n");
+  let mergedPrompt = prompts.join("\n\n---\n\n");
+
+  // 7. Inject input/output schemas if configured
+  if (providerSettings?.ccai?.inputSchema || providerSettings?.ccai?.outputSchema) {
+    mergedPrompt = injectSchemaToPrompt(
+      mergedPrompt,
+      providerSettings.ccai.inputSchema,
+      providerSettings.ccai.outputSchema
+    );
+  }
+
+  return mergedPrompt;
 }
 
 /**
@@ -156,7 +171,8 @@ export function formatProviderInfo(settings: ProviderSettings): string {
   }
 
   if (settings.ccai?.description) {
-    parts.push(`\n${settings.ccai.description}`);
+    const normalizedDescription = normalizeStringOrArray(settings.ccai.description);
+    parts.push(`\n${normalizedDescription}`);
   }
 
   if (settings.ccai?.disabled) {

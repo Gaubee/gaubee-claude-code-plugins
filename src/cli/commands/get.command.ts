@@ -1,6 +1,7 @@
 import type { ProviderSettings } from "@/types/index.js";
 import { getProviderSettingsPath, readJsonFile } from "@/utils/fs.js";
 import { logger } from "@/utils/logger.js";
+import { normalizeStringOrArray } from "@/utils/string-array.js";
 import { Command } from "commander";
 
 export function createGetCommand(): Command {
@@ -22,7 +23,7 @@ export function createGetCommand(): Command {
 
         if (settings.ccai?.description) {
           console.log(`\n📝 Description:`);
-          console.log(`   ${settings.ccai.description.split("\n").join("\n   ")}`);
+          console.log(`   ${normalizeStringOrArray(settings.ccai.description).split("\n").join("\n   ")}`);
         }
 
         console.log(`\n🔧 Configuration:`);

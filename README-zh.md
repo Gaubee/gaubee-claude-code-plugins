@@ -97,6 +97,79 @@ npx ccai enable glm
 - `npx ccai disable <provider>` - 禁用提供商
 - `npx ccai update` - 更新命令文件
 
+### 使用命令模板添加提供商
+
+`add` 命令支持 `--command` 选项,可以使用预定义的命令模板自动配置提供商:
+
+```bash
+# 添加 Claude CLI 提供商(默认行为)
+npx ccai add my-claude --command=claude
+
+# 添加 Google Gemini CLI 提供商
+npx ccai add my-gemini --command=gemini
+
+# 添加 Anthropic Codex CLI 提供商
+npx ccai add my-codex --command=codex
+```
+
+**模板特性:**
+
+每个模板包含:
+- 预配置的命令可执行文件和参数
+- 变体匹配以实现动态行为(日志、JSON 格式化、会话管理)
+- 针对特定 CLI 工具优化的系统提示词
+- 提供商特定的描述
+
+**Claude 模板:**
+- 可执行文件: `claude`
+- 特性: 会话管理、日志记录、JSON 格式化、任务上下文注入
+- 系统提示词: 强调工具调用、批量处理和成本效率
+
+**Gemini 模板:**
+- 可执行文件: `gemini`
+- 特性: YOLO 模式、JSON 输出、直接提示词执行
+- 系统提示词: 突出简单任务的速度和可靠性
+- 注意: 目前不支持外部会话管理
+
+**Codex 模板:**
+- 可执行文件: `codex`
+- 特性: 完全自动模式、沙箱访问、会话恢复能力
+- 系统提示词: 针对自主执行和工具密集型工作流优化
+
+**配置示例:**
+
+运行 `npx ccai add my-gemini --command=gemini` 后,生成的配置将包含:
+
+```json
+{
+  "ccai": {
+    "name": "Gemini",
+    "description": [
+      "Google Gemini CLI 提供商",
+      "",
+      "**优势**:",
+      "- 快速响应时间",
+      "- 适合简单任务",
+      "- 支持 JSON 输出"
+    ],
+    "systemPrompt": [
+      "您正在通过 Google Gemini CLI 执行任务。",
+      "专注于提供快速、可靠的响应。"
+    ],
+    "command": {
+      "executable": "gemini",
+      "args": [
+        "--yolo",
+        "--output-format", "json",
+        "--prompt", "{{TASK}}"
+      ]
+    }
+  }
+}
+```
+
+然后您可以使用 `npx ccai get my-gemini` 根据需要自定义配置。
+
 ### 内部命令(由 Claude Code 使用)
 
 - `npx ccai merge-settings <provider>` - 合并提供商设置

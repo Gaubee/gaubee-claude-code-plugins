@@ -1,9 +1,92 @@
 {
   "ccai": {
     "name": "{{PROVIDER}}",
-    "description": "<!--{{PROVIDER}} Provider description and capabilities.\n\n**Strengths**:\n- Feature 1\n- Feature 2\n\n**Use Cases**:\n- Use case 1\n- Use case 2-->",
-    "systemPrompt": "<!--## Provider-Specific Instructions\n\nYou are using {{PROVIDER}} model. Please follow these guidelines:\n\n1. Leverage the model's strengths\n2. Be aware of limitations\n3. Optimize for cost and performance-->",
-    "disabled": false
+    "//description": [
+      "{{PROVIDER}} Provider description and capabilities.",
+      "",
+      "**Strengths**:",
+      "- Feature 1",
+      "- Feature 2",
+      "",
+      "**Use Cases**:",
+      "- Use case 1",
+      "- Use case 2"
+    ],
+    "//systemPrompt": [
+      "## Provider-Specific Instructions",
+      "",
+      "You are using {{PROVIDER}} model. Please follow these guidelines:",
+      "",
+      "1. Leverage the model's strengths",
+      "2. Be aware of limitations",
+      "3. Optimize for cost and performance"
+    ],
+    "disabled": false,
+    "/*command-notes*/": {
+      "variant-matching": "Use minimatch patterns: exact match, *, {opt1,opt2}, glob patterns",
+      "available-placeholders": "{{log}}, {{prettyJson}}, {{sessionId}}, {{taskType}}, {{SETTINGS_PATH}}, {{SYSTEM_PROMPT}}, {{TASK}}, {{ENV.*}}",
+      "execution-flow": "1. Resolve variant matches -> 2. Replace placeholders -> 3. Execute command"
+    },
+    "//command": {
+      "executable": "claude",
+      "args": [
+        "--dangerously-skip-permissions",
+        "--settings",
+        "{{SETTINGS_PATH}}",
+        {
+          "//": "Variant matching: dynamically change args based on runtime options",
+          "{{log}}": {
+            "true": ["--output-format", "stream-json", "--verbose"],
+            "false": ["--output-format", "json"]
+          }
+        },
+        {
+          "//": "Conditional args: only add --resume if sessionId is provided",
+          "{{sessionId}}": {
+            "{undefined,null}": [],
+            "*": ["--resume", "{{sessionId}}"]
+          }
+        },
+        {
+          "//": "Complex expression: combine multiple conditions",
+          "{{log}}+{{prettyJson}}": {
+            "true+true": ["--format", "pretty-stream"],
+            "true+false": ["--format", "stream"],
+            "false+true": ["--format", "pretty"],
+            "*": []
+          }
+        },
+        "--system-prompt",
+        "{{SYSTEM_PROMPT}}",
+        "-p",
+        "{{PROMPT}}"
+      ]
+    },
+    "//inputSchema": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "The task description to be executed by the AI provider"
+        }
+      },
+      "required": ["task"]
+    },
+    "//outputSchema": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string",
+          "description": "The execution result from the AI provider"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "error"],
+          "description": "The execution status"
+        }
+      },
+      "required": ["result", "status"]
+    }
   },
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "your-{{provider}}-api-key-here",

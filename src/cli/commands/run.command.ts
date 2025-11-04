@@ -17,24 +17,28 @@ export function createRunCommand(): Command {
     )
     .option("--pretty-json", "Format JSON output in a human-readable way")
     .option("--format [template]", "Format output using template (default shows key info)")
-    .option("--prompt-file <path>", "Read prompt from file instead of arguments")
+    .option("--prompt <content>", "Explicit prompt content (overrides inputPrompt)")
+    .option("--prompt-file <path>", "Read prompt from file (overrides inputPrompt)")
+    .option("--input <content>", "Explicit input content (overrides inputPrompt)")
+    .option("--input-file <path>", "Read input from file (overrides inputPrompt)")
     .option(
       "--print-command [format]",
       "Print the final claude command without executing it (text|json|bash|ps)"
     )
     .argument(
-      "[prompt...]",
-      "Task prompt (can be multiple arguments, or enter REPL mode if omitted)"
+      "[inputPrompt...]",
+      "Input prompt (used as both prompt and input by default, or enter REPL mode if omitted)"
     )
-    .action(async (promptArgs: string[], options) => {
+    .action(async (inputPromptArgs: string[], options) => {
       try {
         // Validate provider
         if (!options.provider) {
           logger.error("Provider is required");
-          logger.info("Usage:  --provider <provider> [prompt]");
+          logger.info("Usage:  --provider <provider> [inputPrompt]");
           logger.info("Examples:");
           logger.list([
             " --provider glm 'analyze this code'",
+            " --provider glm --prompt='context' --input='data'",
             " --provider glm  # Enter REPL mode",
           ]);
           process.exit(1);
@@ -50,33 +54,57 @@ export function createRunCommand(): Command {
           }
         }
 
-        // Get prompt from file, arguments, or REPL
-        let prompt = "";
-
-        if (options.promptFile) {
-          // Read from file
+        // Helper function to read from file
+        const readFromFile = async (path: string, name: string): Promise<string> => {
           try {
             const { readFile } = await import("node:fs/promises");
-            prompt = await readFile(options.promptFile, "utf-8");
-            logger.info(`Loaded prompt from: ${logger.path(options.promptFile)}`);
+            const content = await readFile(path, "utf-8");
+            logger.info(`Loaded ${name} from: ${logger.path(path)}`);
+            return content;
           } catch (error) {
             logger.error(
-              `Failed to read prompt file: ${error instanceof Error ? error.message : String(error)}`
+              `Failed to read ${name} file: ${error instanceof Error ? error.message : String(error)}`
             );
             process.exit(1);
           }
-        } else {
-          // Combine prompt arguments
-          prompt = promptArgs.join(" ").trim();
+        };
 
-          // If no prompt provided, enter REPL mode (unless in print-command mode)
-          if (!prompt && !options.printCommand) {
-            prompt = await startREPL();
-          }
+        // Determine prompt and input
+        let prompt = "";
+        let input = "";
+        const defaultInputPrompt = inputPromptArgs.join(" ").trim();
+
+        // Get prompt: explicit option > file > inputPrompt default
+        if (options.prompt) {
+          prompt = options.prompt;
+        } else if (options.promptFile) {
+          prompt = await readFromFile(options.promptFile, "prompt");
+        } else {
+          prompt = defaultInputPrompt;
+        }
+
+        // Get input: explicit option > file > inputPrompt default > prompt value
+        if (options.input) {
+          input = options.input;
+        } else if (options.inputFile) {
+          input = await readFromFile(options.inputFile, "input");
+        } else if (defaultInputPrompt) {
+          input = defaultInputPrompt;
+        } else {
+          // If no explicit input and no inputPrompt, use prompt value
+          input = prompt;
+        }
+
+        // If no prompt/input provided, enter REPL mode (unless in print-command mode)
+        if (!prompt && !input && !options.printCommand) {
+          const replInput = await startREPL();
+          prompt = replInput;
+          input = replInput;
         }
 
         // Execute task
         await executeAI(options.provider, prompt, {
+          input,
           taskType: options.example,
           sessionId: options.sessionId,
           planOnly: options.planOnly,
