@@ -98,11 +98,15 @@ CCAI supports custom command execution for non-Claude CLI providers (e.g., OpenA
     "command": {
       "executable": "curl",
       "args": [
-        "-X", "POST",
+        "-X",
+        "POST",
         "https://api.openai.com/v1/chat/completions",
-        "-H", "Content-Type: application/json",
-        "-H", "Authorization: Bearer {{ENV.OPENAI_API_KEY}}",
-        "-d", "{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"{{SYSTEM_PROMPT}}\"},{\"role\":\"user\",\"content\":\"{{PROMPT}}\"}]}"
+        "-H",
+        "Content-Type: application/json",
+        "-H",
+        "Authorization: Bearer {{ENV.OPENAI_API_KEY}}",
+        "-d",
+        "{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"{{SYSTEM_PROMPT}}\"},{\"role\":\"user\",\"content\":\"{{PROMPT}}\"}]}"
       ]
     }
   }
@@ -128,7 +132,8 @@ CCAI supports conditional arguments using variant matching, allowing you to dyna
     "command": {
       "executable": "claude",
       "args": [
-        "--settings", "{{SETTINGS_PATH}}",
+        "--settings",
+        "{{SETTINGS_PATH}}",
         "--output-format",
         {
           "{{log}}+{{prettyJson}}": {
@@ -143,7 +148,8 @@ CCAI supports conditional arguments using variant matching, allowing you to dyna
             "*": ["--resume", "{{sessionId}}"]
           }
         },
-        "-p", "{{PROMPT}}"
+        "-p",
+        "{{PROMPT}}"
       ]
     }
   }
@@ -272,23 +278,27 @@ npx ccai add my-codex --command=codex
 **Template Features:**
 
 Each template includes:
+
 - Pre-configured command executable and arguments
 - Variant matching for dynamic behavior (logging, JSON formatting, session management)
 - Optimized system prompts for the specific CLI tool
 - Provider-specific descriptions
 
 **Claude Template:**
+
 - Executable: `claude`
 - Features: Session management, logging, JSON formatting, task context injection
 - System Prompt: Emphasizes tool-calling, batch processing, and cost efficiency
 
 **Gemini Template:**
+
 - Executable: `gemini`
 - Features: YOLO mode, JSON output, direct prompt execution
 - System Prompt: Highlights speed and reliability for simple tasks
 - Note: Currently does not support external session management
 
 **Codex Template:**
+
 - Executable: `codex`
 - Features: Full auto mode, sandbox access, session resume capability
 - System Prompt: Optimized for autonomous execution and tool-intensive workflows
@@ -315,11 +325,7 @@ After running `npx ccai add my-gemini --command=gemini`, the generated configura
     ],
     "command": {
       "executable": "gemini",
-      "args": [
-        "--yolo",
-        "--output-format", "json",
-        "--prompt", "{{PROMPT}}"
-      ]
+      "args": ["--yolo", "--output-format", "json", "--prompt", "{{PROMPT}}"]
     }
   }
 }
@@ -419,31 +425,34 @@ npx ccai run --provider glm "analyze" --format "{{role}}: {{content}}"
 
 ### Options Reference
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `--provider` | string | **Required.** Provider name (e.g., glm, minimax) |
-| `--example` | string | Task type hint (web-scraping, code-generation, data-processing, etc.) |
-| `--session-id` | uuid | Continue from previous session |
-| `--plan-only` | boolean | Generate execution plan only (for intelligent routing) |
-| `--log` | boolean | Enable detailed logging with stream-json output |
-| `--pretty-json` | boolean | Format JSON output in human-readable way |
-| `--format` | string | Custom output template |
-| `--prompt-file` | path | Read prompt from file |
-| `--print-command` | string\|boolean | Print command without executing (bash\|ps\|json\|text) |
+| Option            | Type            | Description                                                           |
+| ----------------- | --------------- | --------------------------------------------------------------------- |
+| `--provider`      | string          | **Required.** Provider name (e.g., glm, minimax)                      |
+| `--example`       | string          | Task type hint (web-scraping, code-generation, data-processing, etc.) |
+| `--session-id`    | uuid            | Continue from previous session                                        |
+| `--plan-only`     | boolean         | Generate execution plan only (for intelligent routing)                |
+| `--log`           | boolean         | Enable detailed logging with stream-json output                       |
+| `--pretty-json`   | boolean         | Format JSON output in human-readable way                              |
+| `--format`        | string          | Custom output template                                                |
+| `--prompt-file`   | path            | Read prompt from file                                                 |
+| `--print-command` | string\|boolean | Print command without executing (bash\|ps\|json\|text)                |
 
 ### Use Cases
 
 **1. Testing Provider Configuration:**
+
 ```bash
 npx ccai run --provider glm "test message" --print-command
 ```
 
 **2. Debugging Execution Issues:**
+
 ```bash
 npx ccai run --provider glm "task" --log --print-command=json
 ```
 
 **3. Generating Shell Scripts:**
+
 ```bash
 npx ccai run --provider glm "analysis task" --print-command > run.sh
 chmod +x run.sh
@@ -451,6 +460,7 @@ chmod +x run.sh
 ```
 
 **4. CI/CD Integration:**
+
 ```bash
 # Generate command for CI pipeline
 COMMAND=$(npx ccai run --provider glm "lint code" --print-command=json)

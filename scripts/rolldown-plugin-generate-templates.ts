@@ -1,5 +1,5 @@
-import { watch } from "node:fs";
 import { execSync } from "node:child_process";
+import { watch } from "node:fs";
 import { join } from "node:path";
 import type { Plugin } from "rolldown";
 
@@ -33,16 +33,12 @@ export function generateTemplatesPlugin(): Plugin {
         isWatching = true;
         console.log("👀 Watching templates directory for changes...");
 
-        const watcher = watch(
-          templatesDir,
-          { recursive: true },
-          (eventType, filename) => {
-            if (filename && filename.endsWith(".md")) {
-              console.log(`📝 Template changed: ${filename}`);
-              generateTemplates();
-            }
+        const watcher = watch(templatesDir, { recursive: true }, (eventType, filename) => {
+          if (filename && filename.endsWith(".md")) {
+            console.log(`📝 Template changed: ${filename}`);
+            generateTemplates();
           }
-        );
+        });
 
         // Clean up on process exit
         process.on("SIGINT", () => {

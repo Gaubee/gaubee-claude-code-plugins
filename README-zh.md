@@ -115,23 +115,27 @@ npx ccai add my-codex --command=codex
 **模板特性:**
 
 每个模板包含:
+
 - 预配置的命令可执行文件和参数
 - 变体匹配以实现动态行为(日志、JSON 格式化、会话管理)
 - 针对特定 CLI 工具优化的系统提示词
 - 提供商特定的描述
 
 **Claude 模板:**
+
 - 可执行文件: `claude`
 - 特性: 会话管理、日志记录、JSON 格式化、任务上下文注入
 - 系统提示词: 强调工具调用、批量处理和成本效率
 
 **Gemini 模板:**
+
 - 可执行文件: `gemini`
 - 特性: YOLO 模式、JSON 输出、直接提示词执行
 - 系统提示词: 突出简单任务的速度和可靠性
 - 注意: 目前不支持外部会话管理
 
 **Codex 模板:**
+
 - 可执行文件: `codex`
 - 特性: 完全自动模式、沙箱访问、会话恢复能力
 - 系统提示词: 针对自主执行和工具密集型工作流优化
@@ -152,17 +156,10 @@ npx ccai add my-codex --command=codex
       "- 适合简单任务",
       "- 支持 JSON 输出"
     ],
-    "systemPrompt": [
-      "您正在通过 Google Gemini CLI 执行任务。",
-      "专注于提供快速、可靠的响应。"
-    ],
+    "systemPrompt": ["您正在通过 Google Gemini CLI 执行任务。", "专注于提供快速、可靠的响应。"],
     "command": {
       "executable": "gemini",
-      "args": [
-        "--yolo",
-        "--output-format", "json",
-        "--prompt", "{{TASK}}"
-      ]
+      "args": ["--yolo", "--output-format", "json", "--prompt", "{{TASK}}"]
     }
   }
 }
@@ -246,31 +243,34 @@ npx ccai run --provider glm "分析" --format "{{role}}: {{content}}"
 
 ### 选项参考
 
-| 选项 | 类型 | 描述 |
-|------|------|------|
-| `--provider` | string | **必需。** 提供商名称(如 glm, minimax) |
-| `--example` | string | 任务类型提示(web-scraping, code-generation, data-processing 等) |
-| `--session-id` | uuid | 继续之前的会话 |
-| `--plan-only` | boolean | 仅生成执行计划(用于智能路由) |
-| `--log` | boolean | 启用详细日志和 stream-json 输出 |
-| `--pretty-json` | boolean | 以人类可读方式格式化 JSON 输出 |
-| `--format` | string | 自定义输出模板 |
-| `--prompt-file` | path | 从文件读取提示词 |
-| `--print-command` | string\|boolean | 打印命令而不执行(bash\|ps\|json\|text) |
+| 选项              | 类型            | 描述                                                            |
+| ----------------- | --------------- | --------------------------------------------------------------- |
+| `--provider`      | string          | **必需。** 提供商名称(如 glm, minimax)                          |
+| `--example`       | string          | 任务类型提示(web-scraping, code-generation, data-processing 等) |
+| `--session-id`    | uuid            | 继续之前的会话                                                  |
+| `--plan-only`     | boolean         | 仅生成执行计划(用于智能路由)                                    |
+| `--log`           | boolean         | 启用详细日志和 stream-json 输出                                 |
+| `--pretty-json`   | boolean         | 以人类可读方式格式化 JSON 输出                                  |
+| `--format`        | string          | 自定义输出模板                                                  |
+| `--prompt-file`   | path            | 从文件读取提示词                                                |
+| `--print-command` | string\|boolean | 打印命令而不执行(bash\|ps\|json\|text)                          |
 
 ### 使用场景
 
 **1. 测试提供商配置:**
+
 ```bash
 npx ccai run --provider glm "测试消息" --print-command
 ```
 
 **2. 调试执行问题:**
+
 ```bash
 npx ccai run --provider glm "任务" --log --print-command=json
 ```
 
 **3. 生成 Shell 脚本:**
+
 ```bash
 npx ccai run --provider glm "分析任务" --print-command > run.sh
 chmod +x run.sh
@@ -278,6 +278,7 @@ chmod +x run.sh
 ```
 
 **4. CI/CD 集成:**
+
 ```bash
 # 为 CI 流水线生成命令
 COMMAND=$(npx ccai run --provider glm "代码检查" --print-command=json)

@@ -23,7 +23,9 @@ export function createGetCommand(): Command {
 
         if (settings.ccai?.description) {
           console.log(`\n📝 Description:`);
-          console.log(`   ${normalizeStringOrArray(settings.ccai.description).split("\n").join("\n   ")}`);
+          console.log(
+            `   ${normalizeStringOrArray(settings.ccai.description).split("\n").join("\n   ")}`
+          );
         }
 
         console.log(`\n🔧 Configuration:`);

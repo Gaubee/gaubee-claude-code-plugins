@@ -53,7 +53,9 @@ export function formatSchemaAsMarkdown(schema: JsonSchema, indent = 0): string {
 
       // Handle enums
       if (propSchema.enum) {
-        lines.push(`${prefix}  Allowed values: ${propSchema.enum.map((v) => `\`${v}\``).join(", ")}`);
+        lines.push(
+          `${prefix}  Allowed values: ${propSchema.enum.map((v) => `\`${v}\``).join(", ")}`
+        );
       }
 
       lines.push("");

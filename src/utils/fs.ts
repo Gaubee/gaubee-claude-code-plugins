@@ -169,3 +169,44 @@ export async function dirExists(dirPath: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Get temporary directory path for CCAI
+ */
+export function getTempDir(): string {
+  return join(getCcaiDir(), ".tmp");
+}
+
+/**
+ * Get temporary settings file path for a provider
+ */
+export function getTempSettingsPath(provider: string): string {
+  return join(getTempDir(), `settings-${provider}.json`);
+}
+
+/**
+ * Get temporary prompt file path
+ */
+export function getTempPromptPath(provider?: string): string {
+  const timestamp = Date.now();
+  const filename = provider ? `prompt-${provider}-${timestamp}.md` : `prompt-${timestamp}.md`;
+  return join(getTempDir(), filename);
+}
+
+/**
+ * Ensure temporary directory exists
+ */
+export async function ensureTempDir(): Promise<void> {
+  await ensureDir(getTempDir());
+}
+
+/**
+ * Clean up temporary files
+ */
+export async function cleanupTempFile(filePath: string): Promise<void> {
+  try {
+    await unlink(filePath);
+  } catch {
+    // Ignore cleanup errors
+  }
+}

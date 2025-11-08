@@ -12,7 +12,11 @@ describe("command-templates", () => {
 
       expect(template.executable).toBe("claude");
       expect(template.args).toBeDefined();
-      expect(template.args?.some((arg) => typeof arg === "string" && arg.includes("--dangerously-skip-permissions"))).toBe(true);
+      expect(
+        template.args?.some(
+          (arg) => typeof arg === "string" && arg.includes("--dangerously-skip-permissions")
+        )
+      ).toBe(true);
     });
 
     it("should return gemini template", () => {
@@ -20,7 +24,9 @@ describe("command-templates", () => {
 
       expect(template.executable).toBe("gemini");
       expect(template.args).toBeDefined();
-      expect(template.args?.some((arg) => typeof arg === "string" && arg.includes("--yolo"))).toBe(true);
+      expect(template.args?.some((arg) => typeof arg === "string" && arg.includes("--yolo"))).toBe(
+        true
+      );
     });
 
     it("should return codex template", () => {
@@ -28,7 +34,9 @@ describe("command-templates", () => {
 
       expect(template.executable).toBe("codex");
       expect(template.args).toBeDefined();
-      expect(template.args?.some((arg) => typeof arg === "string" && arg.includes("--full-auto"))).toBe(true);
+      expect(
+        template.args?.some((arg) => typeof arg === "string" && arg.includes("--full-auto"))
+      ).toBe(true);
     });
 
     it("should throw error for unknown template", () => {

@@ -28,13 +28,7 @@ describe("string-array", () => {
     });
 
     it("should handle multiline content", () => {
-      const input = [
-        "## Title",
-        "",
-        "Paragraph 1",
-        "",
-        "Paragraph 2",
-      ];
+      const input = ["## Title", "", "Paragraph 1", "", "Paragraph 2"];
       const expected = "## Title\n\nParagraph 1\n\nParagraph 2";
       expect(normalizeStringOrArray(input)).toBe(expected);
     });

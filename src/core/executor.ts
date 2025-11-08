@@ -1,19 +1,23 @@
 import type { ExecuteOptions, ProviderSettings } from "@/types/index.js";
-import { fileExists, getProviderSettingsPath, readJsonFile } from "@/utils/fs.js";
+import {
+  cleanupTempFile,
+  ensureTempDir,
+  getProviderSettingsPath,
+  getTempPromptPath,
+  readJsonFile,
+} from "@/utils/fs.js";
 import { logger } from "@/utils/logger.js";
 import { spawn } from "node:child_process";
-import { unlink, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { writeFile } from "node:fs/promises";
 import {
   executeCustomCommand,
   prepareCommandArgs,
   validateCommand,
   type CommandPlaceholders,
 } from "./command-executor.js";
-import { buildVariantPlaceholders } from "./variant-matcher.js";
 import { mergeSettings, mergeSystemPrompts } from "./merger.js";
-import { type JsonSchema, validateAndWarn } from "./schema-injector.js";
+import { validateAndWarn, type JsonSchema } from "./schema-injector.js";
+import { buildVariantPlaceholders } from "./variant-matcher.js";
 
 /**
  * Get default print command format based on OS
@@ -41,11 +45,8 @@ async function printClaudeCommand(
           return systemPrompt || "";
         } else if (outputFormat === "bash" || outputFormat === "ps") {
           // For bash/ps, write system prompt to a temp file and use substitution
-          const { writeFile } = await import("node:fs/promises");
-          const { tmpdir } = await import("node:os");
-          const { join } = await import("node:path");
-
-          const tempFile = join(tmpdir(), `ccai-prompt-${Date.now()}.md`);
+          await ensureTempDir();
+          const tempFile = getTempPromptPath();
           await writeFile(tempFile, systemPrompt || "", "utf-8");
 
           // Normalize path for shell commands - use forward slashes for cross-platform compatibility
@@ -79,7 +80,12 @@ async function printClaudeCommand(
       const normalizedArg = arg.replace(/\\/g, "/");
 
       // Handle normal arguments
-      if (normalizedArg.includes(" ") || normalizedArg.includes("\n") || normalizedArg.includes('"') || normalizedArg.includes("'")) {
+      if (
+        normalizedArg.includes(" ") ||
+        normalizedArg.includes("\n") ||
+        normalizedArg.includes('"') ||
+        normalizedArg.includes("'")
+      ) {
         return `'${normalizedArg.replace(/'/g, "'\\''")}'`;
       }
       return normalizedArg;
@@ -237,7 +243,8 @@ async function executeWithClaudeCLI(
   let promptPath: string | undefined;
 
   if (useFile) {
-    promptPath = join(tmpdir(), `ccai-prompt-${provider}-${Date.now()}.md`);
+    await ensureTempDir();
+    promptPath = getTempPromptPath(provider);
     await writeFile(promptPath, systemPrompt, "utf-8");
     if (!isPrintMode) {
       logger.info(`System prompt saved to temp file (${systemPrompt.length} bytes)`);
@@ -437,11 +444,7 @@ async function executeWithClaudeCLI(
   } finally {
     // Clean up temporary files
     if (promptPath) {
-      try {
-        await unlink(promptPath);
-      } catch {
-        // Ignore cleanup errors
-      }
+      await cleanupTempFile(promptPath);
     }
   }
 }

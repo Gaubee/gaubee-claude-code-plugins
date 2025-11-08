@@ -1,4 +1,4 @@
-import type { SDKMessage, SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { inspect } from "node:util";
 import { logger } from "./logger.js";
 
@@ -193,4 +193,3 @@ export function formatClaudeOutput(output: ClaudeResultOutput): void {
 
   console.log(); // Empty line at the end
 }
-

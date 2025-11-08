@@ -1,4 +1,3 @@
-import { OperationContext } from "@/types/operations.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock modules
@@ -48,11 +47,9 @@ describe("update.command", () => {
   describe("updateCommand", () => {
     it("should update all enabled providers and regenerate commands", async () => {
       const { updateCommand } = await import("./update.command.js");
-      const {
-        generateProviderCommand,
-        generateRoutingCommand,
-        generateEvalCommand,
-      } = await import("@/core/installer.js");
+      const { generateProviderCommand, generateRoutingCommand, generateEvalCommand } = await import(
+        "@/core/installer.js"
+      );
       const { fileExists, readJsonFile } = await import("@/utils/fs.js");
 
       vi.mocked(fileExists).mockResolvedValue(false);

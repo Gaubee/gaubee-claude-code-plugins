@@ -1,7 +1,7 @@
 import type { CustomCommand } from "@/types/index.js";
 import { logger } from "@/utils/logger.js";
-import { resolveVariantArgs } from "./variant-matcher.js";
 import { spawn } from "node:child_process";
+import { resolveVariantArgs } from "./variant-matcher.js";
 
 /**
  * Placeholder values for command argument replacement
@@ -86,9 +86,10 @@ export async function executeCustomCommand(
   const { captureOutput = false, stdio = "inherit", variantPlaceholders = {} } = options;
 
   // Prepare arguments: resolve variants and replace placeholders
-  const finalArgs = variantPlaceholders && Object.keys(variantPlaceholders).length > 0
-    ? prepareCommandArgs(command, placeholders, variantPlaceholders)
-    : replaceCommandPlaceholders(resolveVariantArgs(args, {}), placeholders);
+  const finalArgs =
+    variantPlaceholders && Object.keys(variantPlaceholders).length > 0
+      ? prepareCommandArgs(command, placeholders, variantPlaceholders)
+      : replaceCommandPlaceholders(resolveVariantArgs(args, {}), placeholders);
 
   logger.info(`Executing custom command: ${logger.command(executable)}`);
 

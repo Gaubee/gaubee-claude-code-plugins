@@ -1,6 +1,6 @@
 import type { CommandArg, VariantMatch } from "@/types/index.js";
-import type { CommandPlaceholders } from "./command-executor.js";
 import { minimatch } from "minimatch";
+import type { CommandPlaceholders } from "./command-executor.js";
 
 /**
  * Check if an argument is a variant match object
@@ -136,8 +136,7 @@ export function buildVariantPlaceholders(
     // Add any custom placeholders
     ...Object.fromEntries(
       Object.entries(commandPlaceholders).filter(
-        ([key]) =>
-          !["SETTINGS_PATH", "SYSTEM_PROMPT", "PROMPT", "INPUT", "TASK"].includes(key)
+        ([key]) => !["SETTINGS_PATH", "SYSTEM_PROMPT", "PROMPT", "INPUT", "TASK"].includes(key)
       )
     ),
   };

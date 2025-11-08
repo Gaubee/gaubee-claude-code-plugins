@@ -1,12 +1,12 @@
 import templates from "@/generated/templates.js";
-import type { ProviderSettings } from "@/types/index.js";
-import type { OperationContext } from "@/types/operations.js";
 import {
   type CommandTemplate,
   getCommandTemplate,
   getCommandTemplateDescription,
   getCommandTemplateSystemPrompt,
 } from "@/templates/command-templates.js";
+import type { ProviderSettings } from "@/types/index.js";
+import type { OperationContext } from "@/types/operations.js";
 import { fileExists, getProviderSettingsPath, writeJsonFile } from "@/utils/fs.js";
 import { logger } from "@/utils/logger.js";
 import { Command } from "commander";
@@ -65,12 +65,15 @@ export async function addProvider(
     const systemPrompt = getCommandTemplateSystemPrompt(options.command, provider);
 
     // Remove comment fields that are being replaced with actual values
-    const cleanedCcaiConfig = removeCommentFields(settingsTemplate.ccai as Record<string, unknown>, [
-      "description",
-      "systemPrompt",
-      "command",
-      "command-notes", // Also remove command-notes since we're using a real command
-    ]);
+    const cleanedCcaiConfig = removeCommentFields(
+      settingsTemplate.ccai as Record<string, unknown>,
+      [
+        "description",
+        "systemPrompt",
+        "command",
+        "command-notes", // Also remove command-notes since we're using a real command
+      ]
+    );
 
     settingsTemplate = {
       ...settingsTemplate,
@@ -110,7 +113,9 @@ export function createAddCommand(): Command {
       "Command template to use (claude, gemini, codex)",
       (value) => {
         if (!["claude", "gemini", "codex"].includes(value)) {
-          throw new Error(`Invalid command template: ${value}. Must be one of: claude, gemini, codex`);
+          throw new Error(
+            `Invalid command template: ${value}. Must be one of: claude, gemini, codex`
+          );
         }
         return value as CommandTemplate;
       }

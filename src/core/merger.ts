@@ -5,19 +5,20 @@ import {
   type PromptMergeOptions,
 } from "@/types/index.js";
 import {
+  ensureTempDir,
   fileExists,
   getClaudeDir,
   getProviderSettingsPath,
+  getTempSettingsPath,
   readJsonFile,
   writeJsonFile,
 } from "@/utils/fs.js";
 import { logger } from "@/utils/logger";
 import { normalizeStringOrArray } from "@/utils/string-array.js";
-import { injectSchemaToPrompt } from "./schema-injector.js";
 import { isArray, mergeWith } from "lodash-es";
 import { readFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { injectSchemaToPrompt } from "./schema-injector.js";
 
 /**
  * Merge settings for a provider using lodash mergeWith
@@ -51,8 +52,9 @@ export async function mergeSettings(provider: string): Promise<string> {
     return undefined;
   });
 
-  // Write to temporary file
-  const tempPath = join(tmpdir(), `ccai-settings-${provider}.json`);
+  // Write to temporary file in unified temp directory
+  await ensureTempDir();
+  const tempPath = getTempSettingsPath(provider);
   await writeJsonFile(tempPath, merged);
 
   return tempPath;

@@ -40,12 +40,18 @@ const mockReadJsonFile = vi.fn().mockResolvedValue({
   env: {},
 });
 const mockGetProviderSettingsPath = vi.fn().mockReturnValue("/path/to/provider/settings.json");
+const mockEnsureTempDir = vi.fn().mockResolvedValue(undefined);
+const mockGetTempPromptPath = vi.fn().mockReturnValue("/path/to/.claude/ccai/.tmp/prompt-123.md");
+const mockCleanupTempFile = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/utils/fs.js", () => ({
   fileExists: mockFileExists,
   readJsonFile: mockReadJsonFile,
   getProviderSettingsPath: mockGetProviderSettingsPath,
   getClaudeDir: vi.fn().mockReturnValue("/path/to/.claude"),
+  ensureTempDir: mockEnsureTempDir,
+  getTempPromptPath: mockGetTempPromptPath,
+  cleanupTempFile: mockCleanupTempFile,
 }));
 
 describe("executor", () => {
@@ -383,7 +389,9 @@ describe("executor", () => {
       const consoleSpy = vi.spyOn(console, "log");
 
       // Mock system prompt with special characters
-      mockMergeSystemPrompts.mockResolvedValue("System prompt with 'single quotes' and \"double quotes\"");
+      mockMergeSystemPrompts.mockResolvedValue(
+        "System prompt with 'single quotes' and \"double quotes\""
+      );
 
       await executeAI("test-provider", "test task", {
         printCommand: "text",
@@ -409,7 +417,7 @@ describe("executor", () => {
 
       // Should have called writeFile to create temp file
       expect(mockWriteFile).toHaveBeenCalledWith(
-        expect.stringMatching(/ccai-prompt-\d+\.md$/),
+        expect.stringMatching(/\.tmp\/prompt-\d+\.md$/),
         "system prompt content",
         "utf-8"
       );

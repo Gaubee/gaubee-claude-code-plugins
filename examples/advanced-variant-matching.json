@@ -97,9 +97,7 @@
         "{{SYSTEM_PROMPT}} - merged system prompt",
         "{{TASK}} - user task description"
       ],
-      "environment": [
-        "{{ENV.VAR_NAME}} - environment variable"
-      ]
+      "environment": ["{{ENV.VAR_NAME}} - environment variable"]
     },
     "execution-order": [
       "1. Evaluate expressions: replace placeholders in variant match keys",

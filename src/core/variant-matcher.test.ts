@@ -111,15 +111,16 @@ describe("variant-matcher", () => {
         },
       };
 
-      expect(
-        resolveVariantMatch(variantMatch, { log: "true", prettyJson: "true" })
-      ).toEqual(["stream-json", "--verbose"]);
-      expect(
-        resolveVariantMatch(variantMatch, { log: "false", prettyJson: "false" })
-      ).toEqual(["json"]);
-      expect(
-        resolveVariantMatch(variantMatch, { log: "true", prettyJson: "false" })
-      ).toEqual(["json"]);
+      expect(resolveVariantMatch(variantMatch, { log: "true", prettyJson: "true" })).toEqual([
+        "stream-json",
+        "--verbose",
+      ]);
+      expect(resolveVariantMatch(variantMatch, { log: "false", prettyJson: "false" })).toEqual([
+        "json",
+      ]);
+      expect(resolveVariantMatch(variantMatch, { log: "true", prettyJson: "false" })).toEqual([
+        "json",
+      ]);
     });
 
     it("should return empty array if no match", () => {

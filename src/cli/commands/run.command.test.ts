@@ -70,10 +70,9 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "analyze", "this", "complex", "code"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "analyze", "this", "complex", "code"], {
+        from: "user",
+      });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze this complex code", {
         input: "analyze this complex code",
@@ -143,10 +142,9 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "--example", "web-scraping", "test prompt"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "--example", "web-scraping", "test prompt"], {
+        from: "user",
+      });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "test prompt", {
         input: "test prompt",
@@ -183,10 +181,9 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "--prompt-file", "/path/to/prompt.txt"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "--prompt-file", "/path/to/prompt.txt"], {
+        from: "user",
+      });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "prompt content from file", {
         input: "prompt content from file",
@@ -214,10 +211,9 @@ describe("run.command", () => {
       command.exitOverride();
 
       try {
-        await command.parseAsync(
-          ["--provider", "glm", "--prompt-file", "/nonexistent/file.txt"],
-          { from: "user" }
-        );
+        await command.parseAsync(["--provider", "glm", "--prompt-file", "/nonexistent/file.txt"], {
+          from: "user",
+        });
       } catch (error) {
         // Expected to throw
       }
@@ -231,10 +227,9 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "analyze this code", "--print-command"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "analyze this code", "--print-command"], {
+        from: "user",
+      });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze this code", {
         input: "analyze this code",
@@ -353,10 +348,9 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "--print-command", "json", "analyze code"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "--print-command", "json", "analyze code"], {
+        from: "user",
+      });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
         input: "analyze code",
@@ -376,10 +370,9 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "--print-command", "text", "analyze code"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "--print-command", "text", "analyze code"], {
+        from: "user",
+      });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
         input: "analyze code",
@@ -399,10 +392,9 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "--print-command", "bash", "analyze code"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "--print-command", "bash", "analyze code"], {
+        from: "user",
+      });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
         input: "analyze code",
@@ -422,10 +414,9 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "--print-command", "ps", "analyze code"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "--print-command", "ps", "analyze code"], {
+        from: "user",
+      });
 
       expect(executeAI).toHaveBeenCalledWith("glm", "analyze code", {
         input: "analyze code",
@@ -446,10 +437,7 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "--print-command"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "--print-command"], { from: "user" });
 
       // Should not call startREPL
       expect(startREPL).not.toHaveBeenCalled();
@@ -474,10 +462,7 @@ describe("run.command", () => {
 
       const command = createRunCommand();
 
-      await command.parseAsync(
-        ["--provider", "glm", "--print-command", "bash"],
-        { from: "user" }
-      );
+      await command.parseAsync(["--provider", "glm", "--print-command", "bash"], { from: "user" });
 
       // Should not call startREPL
       expect(startREPL).not.toHaveBeenCalled();
